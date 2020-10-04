@@ -4415,7 +4415,10 @@ int64_t EvalExpressionAsInteger(char *expression_param, char *buffer_error_rtn, 
         *offset_reference_rtn = (WORD) value_expression;
     }
     else
+	{
+        *is_reloc_rtn = 0;  /* BuildOneLineData depends on this being set, perhaps other things do too */
         *expression_address_rtn = (0x00FFFFFF & value_expression);   /* Adresse Longue 24 bit : Bank/HighLow */
+	}
     
     /** We modify the value returned according to the Prefix #><^| **/
     if((has_hash == 1 || is_pea_opcode == 1 || current_line->type == LINE_DATA) && has_more == 1)
