@@ -32,6 +32,9 @@ else
 
     ifdef CPU_OPT
         ifeq ($(OS),Darwin)
+            # add both mac architectures to create a fat universal binary
+            CFLAGS+=-arch x86_64 
+            CFLAGS+=-arch arm64
             MAH_SHEEN:=$(shell machine)
             ifeq ($(CPU),powerpc)
                 CFLAGS+=-fast
