@@ -29,7 +29,12 @@ else
     
     OS:=$(shell uname -s)
     CPU:=$(shell uname -p)
-
+    ifeq ($(OS),Darwin)
+        # add both mac architectures to create a fat universal binary
+        CFLAGS+=-arch x86_64 
+        CFLAGS+=-arch arm64
+    endif
+    
     ifdef CPU_OPT
         ifeq ($(OS),Darwin)
             MAH_SHEEN:=$(shell machine)
