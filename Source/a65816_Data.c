@@ -621,9 +621,9 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
 
                     /* Adjust bit 7 */
                     if(current_line->operand_txt[i] == '"')
-                        param->buffer_string[nb_byte+j] = (0x80 | current_line->operand_txt[i+1+j]);
+                        param->buffer_string[nb_byte+j] = (char)(0x80 | current_line->operand_txt[i+1+j]);
                     else
-                        param->buffer_string[nb_byte+j] = (0x7F & current_line->operand_txt[i+1+j]);
+                        param->buffer_string[nb_byte+j] = (char)(0x7F & current_line->operand_txt[i+1+j]);
                 }
 
                 /* Adjust the length */
@@ -698,9 +698,9 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
         for(int i=0; i<current_line->nb_byte; i++)
         {
             if(current_line->operand_txt[0] == '"')
-                current_line->data[i] = (0x80 | current_line->operand_txt[current_line->nb_byte-i]);
+                current_line->data[i] = (char)(0x80 | current_line->operand_txt[current_line->nb_byte-i]);
             else
-                current_line->data[i] = (0x7F & current_line->operand_txt[current_line->nb_byte-i]);
+                current_line->data[i] = (char)(0x7F & current_line->operand_txt[current_line->nb_byte-i]);
         }
     }
     else if(!my_stricmp(current_line->opcode_txt,"CHK"))
