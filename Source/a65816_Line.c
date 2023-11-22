@@ -2466,10 +2466,15 @@ int ComputeLineAddress(struct omf_segment *current_omfsegment, struct omf_projec
             }
 
             /* Error: exceeds 64 KB */
-            if(current_address > 0x10000)     /* @TODO: why is this labelled a bug? 0xFFFF */
+            //if(current_address > 0x10000)     /* @TODO: why is this labelled a bug? 0xFFFF */
+			//{
+			//    sprintf(param->buffer_error,"Error : Object code size > 64 KB (line %d, file '%s')",current_line->file_line_number,current_line->file->file_name);
+			//    my_RaiseError(ERROR_RAISE,param->buffer_error);
+			//}
+            if(current_address > 0x10000)
             {
-                sprintf(param->buffer_error,"Error : Object code size > 64 KB (line %d, file '%s')",current_line->file_line_number,current_line->file->file_name);
-                my_RaiseError(ERROR_RAISE,param->buffer_error);
+			current_bank += current_address >> 16;
+			current_address &= 0xFFFF;
             }
         }
     }
