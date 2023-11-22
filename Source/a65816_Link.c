@@ -895,6 +895,15 @@ static struct omf_project *BuildLinkFile(struct source_file *link_file)
             continue;
         }
 
+
+        /** BSZ: Bank Size  **/
+        if(!my_stricmp(current_line->opcode_txt,"BSZ") && current_omfproject->last_segment != NULL)
+        {
+            current_omfproject->last_segment->bank_size = atoi(current_line->operand_txt);
+            continue;
+        }
+
+
         /** KND: Type and Segment Attributes **/
         if(!my_stricmp(current_line->opcode_txt,"KND") && current_omfproject->last_segment != NULL)
         {
