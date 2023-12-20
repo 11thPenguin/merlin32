@@ -15,6 +15,17 @@
 /* Windows */
 #include <io.h>
 #include <windows.h>                    /* GetFileAttributes() SetFileAttributes() FILE_ATTRIBUTE_HIDDEN */
+
+// NOT THREAD SAFE
+wchar_t* TO_WIDESTR(char* pANSI)
+{
+static	wchar_t tempChars[4096];
+
+	mbstowcs(&tempChars, pANSI, 4096);
+
+	return tempChars;
+}
+
 #else
 /* Linux + MacOS */
 #include <inttypes.h>
@@ -1471,7 +1482,7 @@ char *GetFileProperCasePath(char *file_path_arg)
     if(file_path_arg[1] != ':')
     {
         /* Current directory */
-        GetCurrentDirectory(1024,folder_current);
+        GetCurrentDirectory(1024, TO_WIDESTR(folder_current));
         if(strlen(folder_current) > 0)
             if(folder_current[strlen(folder_current)-1] != '\\')
                 strcat(folder_current,"\\");
@@ -4875,20 +4886,20 @@ void my_SetFileAttribute(char *file_path, int flag)
     DWORD file_attributes;
 
     /* Attributs of File */
-    file_attributes = GetFileAttributes(file_path);
+    file_attributes = GetFileAttributes(TO_WIDESTR(file_path));
 
     /* Change the visibility */
     if(flag == SET_FILE_VISIBLE)
     {
         /* Show the File */
         if((file_attributes | FILE_ATTRIBUTE_HIDDEN) == file_attributes)
-            SetFileAttributes(file_path,file_attributes - FILE_ATTRIBUTE_HIDDEN);
+            SetFileAttributes(TO_WIDESTR(file_path),file_attributes - FILE_ATTRIBUTE_HIDDEN);
     }
     else if(flag == SET_FILE_HIDDEN)
     {
         /* Hide the File */
         if((file_attributes | FILE_ATTRIBUTE_HIDDEN) != file_attributes)
-            SetFileAttributes(file_path,file_attributes | FILE_ATTRIBUTE_HIDDEN);
+            SetFileAttributes(TO_WIDESTR(file_path),file_attributes | FILE_ATTRIBUTE_HIDDEN);
     }
 #else
     (void)file_path;
@@ -5547,7 +5558,7 @@ int IsDirectory(char *name)
     int is_directory = 0;
     
 #if defined(WIN32) || defined(WIN64)
-    if (GetFileAttributes(name) & FILE_ATTRIBUTE_DIRECTORY)
+    if (GetFileAttributes(TO_WIDESTR(name)) & FILE_ATTRIBUTE_DIRECTORY)
     is_directory = 1;
 #else
     struct stat file_info;
