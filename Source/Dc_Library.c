@@ -3194,7 +3194,9 @@ DWORD GetDwordValue(char *value_txt)
 
     /* Conversion to DWORD */
     if (0 != num_sscanf_values)
-    {
+
+
+{
         value_dwd = (DWORD)value_int;
     }
 
@@ -5005,7 +5007,10 @@ void my_DeleteFile(char *file_path)
 char **BuildUniqueListFromFile(char *file_path, int *nb_value)
 {
     FILE *fd;
-    int i, found, nb_line, line_length;
+    int i;
+    int found;
+    int nb_line;
+    int line_length;
     char **tab;
     char buffer_line[1024];
 
@@ -5040,7 +5045,10 @@ char **BuildUniqueListFromFile(char *file_path, int *nb_value)
         if(buffer_line[line_length-1] == 0x0A)
         {
             if( line_length > 2 && buffer_line[line_length-2] == 0x0D )
+            {
+                // JAS: REALLY? WHY PREFIX?!
                 --line_length;
+            }
             buffer_line[line_length-1] = '\0';  /* make the final \n into EOL (zero) */
         }
 
