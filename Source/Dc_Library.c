@@ -358,7 +358,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_opcode != NULL)
             {
                 current_omfsegment->local_item.name = (char *)data;
-                found_item_ptr = (struct item **) bsearch(&current_omfsegment->local_item_ptr,(void *)current_omfsegment->tab_opcode,current_omfsegment->nb_opcode,sizeof(struct item *),compare_item);
+                found_item_ptr =
+                    (struct item**)bsearch(
+                        &current_omfsegment->local_item_ptr,
+                        (void*)current_omfsegment->tab_opcode,
+                        current_omfsegment->nb_opcode,
+                        sizeof(struct item*),
+                        compare_item
+                    );
                 if(found_item_ptr != NULL)
                     *((struct item **)value) = *found_item_ptr;
             }
@@ -478,7 +485,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_data != NULL)
             {
                 current_omfsegment->local_item.name = (char *) data;
-                found_item_ptr = (struct item **) bsearch(&current_omfsegment->local_item_ptr,(void *)current_omfsegment->tab_data,current_omfsegment->nb_data,sizeof(struct item *),compare_item);
+                found_item_ptr =
+                    (struct item **) bsearch(
+                        &current_omfsegment->local_item_ptr,
+                        (void *)current_omfsegment->tab_data,
+                        current_omfsegment->nb_data,
+                        sizeof(struct item *),
+                        compare_item
+                    );
                 if(found_item_ptr != NULL)
                     *((struct item **)value) = *found_item_ptr;
             }
@@ -598,7 +612,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_directive != NULL)
             {
                 current_omfsegment->local_item.name = (char *) data;
-                found_item_ptr = (struct item **) bsearch(&current_omfsegment->local_item_ptr,(void *)current_omfsegment->tab_directive,current_omfsegment->nb_directive,sizeof(struct item *),compare_item);
+                found_item_ptr =
+                    (struct item **) bsearch(
+                        &current_omfsegment->local_item_ptr,
+                        (void *)current_omfsegment->tab_directive,
+                        current_omfsegment->nb_directive,
+                        sizeof(struct item *),
+                        compare_item
+                    );
                 if(found_item_ptr != NULL)
                     *((struct item **)value) = *found_item_ptr;
             }
@@ -713,7 +734,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_direqu != NULL)
             {
                 current_omfsegment->local_item.name = (char *) data;
-                found_item_ptr = (struct item **) bsearch(&current_omfsegment->local_item_ptr,(void *)current_omfsegment->tab_direqu,current_omfsegment->nb_direqu,sizeof(struct item *),compare_item);
+                found_item_ptr = 
+                    (struct item **) bsearch(
+                        &current_omfsegment->local_item_ptr,
+                        (void *)current_omfsegment->tab_direqu,
+                        current_omfsegment->nb_direqu,
+                        sizeof(struct item *),
+                        compare_item
+                    );
                 if(found_item_ptr != NULL)
                     *((struct item **)value) = *found_item_ptr;
             }
@@ -813,7 +841,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_macro != NULL)
             {
                 current_omfsegment->local_macro.name = (char *) data;
-                found_macro_ptr = (struct macro **) bsearch(&current_omfsegment->local_macro_ptr,(void *)current_omfsegment->tab_macro,current_omfsegment->nb_macro,sizeof(struct macro *),compare_macro);
+                found_macro_ptr =
+                    (struct macro **) bsearch(
+                        &current_omfsegment->local_macro_ptr,
+                        (void *)current_omfsegment->tab_macro,
+                        current_omfsegment->nb_macro,
+                        sizeof(struct macro *),
+                        compare_macro
+                    );
                 if(found_macro_ptr != NULL)
                     *((struct macro **)value) = *found_macro_ptr;
             }
@@ -920,7 +955,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_label != NULL)
             {
                 current_omfsegment->local_label.name = (char *) data;
-                found_label_ptr = (struct label **) bsearch(&current_omfsegment->local_label_ptr,(void *)current_omfsegment->tab_label,current_omfsegment->nb_label,sizeof(struct label *),compare_label);
+                found_label_ptr =
+                    (struct label **) bsearch(
+                        &current_omfsegment->local_label_ptr,
+                        (void *)current_omfsegment->tab_label,
+                        current_omfsegment->nb_label,
+                        sizeof(struct label *),
+                        compare_label
+                    );
                 if(found_label_ptr != NULL)
                     *((struct label **)value) = *found_label_ptr;
             }
@@ -1017,7 +1059,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             }
 
             /* Sort items */
-            qsort(current_omfsegment->tab_equivalence,current_omfsegment->nb_equivalence,sizeof(struct equivalence *), sortValues ? compare_equivalence_v : compare_equivalence);
+            qsort(current_omfsegment->tab_equivalence,
+                current_omfsegment->nb_equivalence,
+                sizeof(struct equivalence *),
+                sortValues ? compare_equivalence_v : compare_equivalence);
 
             /* Replace the links */
             for(int i=0; i<current_omfsegment->nb_equivalence; i++)
@@ -1039,7 +1084,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_equivalence != NULL)
             {
                 current_omfsegment->local_equivalence.name = (char *) data;
-                found_equivalence_ptr = (struct equivalence **) bsearch(&current_omfsegment->local_equivalence_ptr,(void *)current_omfsegment->tab_equivalence,current_omfsegment->nb_equivalence,sizeof(struct equivalence *),compare_equivalence);
+                found_equivalence_ptr =
+                    (struct equivalence **) bsearch(
+                        &current_omfsegment->local_equivalence_ptr,
+                        (void *)current_omfsegment->tab_equivalence,
+                        current_omfsegment->nb_equivalence,
+                        sizeof(struct equivalence *),
+                        compare_equivalence
+                    );
                 if(found_equivalence_ptr != NULL)
                     *((struct equivalence **)value) = *found_equivalence_ptr;
             }
@@ -1149,7 +1201,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_variable != NULL)
             {
                 current_omfsegment->local_variable.name = (char *) data;
-                found_variable_ptr = (struct variable **) bsearch(&current_omfsegment->local_variable_ptr,(void *)current_omfsegment->tab_variable,current_omfsegment->nb_variable,sizeof(struct variable *),compare_variable);
+                found_variable_ptr =
+                    (struct variable **) bsearch(
+                        &current_omfsegment->local_variable_ptr,
+                        (void *)current_omfsegment->tab_variable,
+                        current_omfsegment->nb_variable,
+                        sizeof(struct variable *),
+                        compare_variable
+                    );
                 if(found_variable_ptr != NULL)
                     *((struct variable **)value) = *found_variable_ptr;
             }
@@ -1258,7 +1317,14 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             if(current_omfsegment->tab_external != NULL)
             {
                 current_omfsegment->local_external.name = (char *) data;
-                found_external_ptr = (struct external **) bsearch(&current_omfsegment->local_external_ptr,(void *)current_omfsegment->tab_external,current_omfsegment->nb_external,sizeof(struct external *),compare_external);
+                found_external_ptr =
+                    (struct external **) bsearch(
+                        &current_omfsegment->local_external_ptr,
+                        (void *)current_omfsegment->tab_external,
+                        current_omfsegment->nb_external,
+                        sizeof(struct external *),
+                        compare_external
+                    );
                 if(found_external_ptr != NULL)
                     *((struct external **)value) = *found_external_ptr;
             }
@@ -3194,7 +3260,7 @@ DWORD GetDwordValue(char *value_txt)
 
     /* Conversion to DWORD */
     if (0 != num_sscanf_values)
-
+        
 
 {
         value_dwd = (DWORD)value_int;
@@ -3974,12 +4040,43 @@ int64_t GetQuickVariable(char *variable_name, struct source_line *cond_line, int
 /**************************************************************/
 /*  EvalExpressionAsInteger() :  Evaluation of an expression. */
 /**************************************************************/
-int64_t EvalExpressionAsInteger(char *expression_param, char *buffer_error_rtn, struct source_line *current_line, int operand_size, int *is_reloc_rtn, BYTE *byte_count_rtn, BYTE *bit_shift_rtn, WORD *offset_reference_rtn, DWORD *expression_address_rtn, struct external **external_rtn, struct omf_segment *current_omfsegment)
+int64_t EvalExpressionAsInteger(
+    char *expression_param,
+    char *buffer_error_rtn,
+    struct source_line *current_line,
+    int operand_size,
+    int *is_reloc_rtn,
+    BYTE *byte_count_rtn,
+    BYTE *bit_shift_rtn,
+    WORD *offset_reference_rtn,
+    DWORD *expression_address_rtn,
+    struct external **external_rtn,
+    struct omf_segment *current_omfsegment
+)
 {
-    int has_priority = 0, nb_open = 0, is_algebric = 0;
-    int64_t value = 0, value_expression = 0, value_variable = 0, value_binary = 0, value_decimal = 0, value_hexa = 0, value_ascii = 0, value_address = 0;
+    int has_priority = 0;
+    int nb_open = 0;
+    int is_algebric = 0;
+    int64_t value = 0;
+    int64_t value_expression = 0;
+    int64_t value_variable = 0;
+    int64_t value_binary = 0;
+    int64_t value_decimal = 0;
+    int64_t value_hexa = 0;
+    int64_t value_ascii = 0;
+    int64_t value_address = 0;
     char *new_value_txt = NULL;
-    int nb_element = 0, is_operator = 0, first_value_is_negative = 0, nb_address = 0, has_extra_hash = 0, nb_item = 0, is_pea_opcode = 0, is_mvn_opcode = 0, is_error = 0, is_dum_label = 0, is_fix_label = 0;
+    int nb_element = 0;
+    int is_operator = 0;
+    int first_value_is_negative = 0;
+    int nb_address = 0;
+    int has_extra_hash = 0;
+    int nb_item = 0;
+    int is_pea_opcode = 0;
+    int is_mvn_opcode = 0;
+    int is_error = 0;
+    int is_dum_label = 0;
+    int is_fix_label = 0;
     char expression[1024];
     struct external *current_external = NULL;
     struct external *has_external = NULL;
@@ -4030,7 +4127,8 @@ int64_t EvalExpressionAsInteger(char *expression_param, char *buffer_error_rtn, 
     has_pipe = (expression[has_hash] == '|' || expression[has_hash] == '!') ? 1 : 0;
 
     /** Cut the string of characters into several elements (skips the #> <^ | from the beginning) **/
-    tab_element = DecodeOperandeAsElementTable(&expression[has_hash+has_less+has_more+has_exp+has_pipe],&nb_element,SEPARATOR_EVALUATE_EXPRESSION,current_line);
+    tab_element =
+        DecodeOperandeAsElementTable(&expression[has_hash+has_less+has_more+has_exp+has_pipe],&nb_element,SEPARATOR_EVALUATE_EXPRESSION,current_line);
     if(tab_element == NULL)
     {
         sprintf(buffer_error_rtn,"Impossible to decode Operand '%s' as element table",expression);
