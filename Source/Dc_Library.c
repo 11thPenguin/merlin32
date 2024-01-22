@@ -933,7 +933,12 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             }
 
             /* Sort items */
-            qsort(current_omfsegment->tab_label,current_omfsegment->nb_label,sizeof(struct label *), sortValues ? compare_label_v : compare_label);
+            qsort(current_omfsegment->tab_label,
+                current_omfsegment->nb_label,
+                sizeof(struct label *),
+                /* JASNOTE: ?:, REALLY? */
+                sortValues ? compare_label_v : compare_label
+            );
 
             /* Replace the links */
             for(int i=0; i<current_omfsegment->nb_label; i++)
@@ -990,7 +995,9 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
         case MEMORY_ADD_EQUIVALENCE :
             /* Check the uniqueness */
             new_equivalence = (struct equivalence *) data;
-            for(current_equivalence = current_omfsegment->first_equivalence; current_equivalence; current_equivalence=current_equivalence->next)
+            for(current_equivalence = current_omfsegment->first_equivalence;
+                current_equivalence;
+                current_equivalence=current_equivalence->next)
             {
                 if(!strcmp(current_equivalence->name,new_equivalence->name) &&
                    current_equivalence->source_line == new_equivalence->source_line)
@@ -1048,7 +1055,8 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             if(!current_omfsegment->tab_equivalence)
             {
-                current_omfsegment->tab_equivalence = (struct equivalence **) calloc(current_omfsegment->nb_equivalence,sizeof(struct equivalence *));
+                current_omfsegment->tab_equivalence =
+                    (struct equivalence **) calloc(current_omfsegment->nb_equivalence,sizeof(struct equivalence *));
                 if(current_omfsegment->tab_equivalence == NULL)
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_equivalence table");
 
@@ -1098,7 +1106,9 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             else
             {
                 /* Search via the chain list */
-                for(current_equivalence=current_omfsegment->first_equivalence; current_equivalence; current_equivalence=current_equivalence->next)
+                for(current_equivalence=current_omfsegment->first_equivalence;
+                    current_equivalence;
+                    current_equivalence=current_equivalence->next)
                     if(!strcmp(current_equivalence->name,(char *)data))
                     {
                         *((struct equivalence **)value) = current_equivalence;
@@ -1659,8 +1669,13 @@ char **GetFolderFileList(char *folder_path, int *nb_file_rtn, int *is_error)
     /* Prepare the file */
     strcpy(param->buffer_folder_path,folder_path);
     if(strlen(param->buffer_folder_path) > 0)
-        if(param->buffer_folder_path[strlen(param->buffer_folder_path)-1] != '\\' && param->buffer_folder_path[strlen(param->buffer_folder_path)-1] != '/')
-            strcat(param->buffer_folder_path,FOLDER_SEPARATOR);
+        if(
+            param->buffer_folder_path[strlen(param->buffer_folder_path)-1] != '\\' && 
+            param->buffer_folder_path[strlen(param->buffer_folder_path)-1] != '/'
+        )
+        {
+            strcat(param->buffer_folder_path, FOLDER_SEPARATOR);
+        }
 
 #if defined(WIN32) || defined(WIN64)  
     /** We loop on all the Files present **/
@@ -3458,7 +3473,13 @@ int64_t GetAsciiValue(char *expression)
 /***********************************************************/
 /*  GetAddressValue() :  Retrieve the value of an address. */
 /***********************************************************/
-int64_t GetAddressValue(char *expression, int current_address, struct external **current_external_rtn, int *is_dum_label_rtn, int *is_fix_label_rtn, struct omf_segment *current_omfsegment)
+int64_t GetAddressValue(
+    char *expression,
+    int current_address,
+    struct external **current_external_rtn,
+    int *is_dum_label_rtn,
+    int *is_fix_label_rtn,
+    struct omf_segment *current_omfsegment)
 {
     int64_t address = 0;
     struct label *current_label = NULL;
@@ -3512,8 +3533,22 @@ int64_t GetAddressValue(char *expression, int current_address, struct external *
 /********************************************************************************/
 int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_expression_rtn, struct omf_segment *current_omfsegment)
 {
-    int is_algebric = 0, first_value_is_negative = 0, nb_element = 0, is_error = 0, nb_open = 0, has_priority = 0, is_operator = 0, nb_item = 0;
-    int64_t value = 0, value_expression = 0, value_variable = 0, value_binary = 0, value_decimal = 0, value_hexa = 0, value_ascii = 0, value_address = 0;
+    int is_algebric = 0;
+    int first_value_is_negative = 0;
+    int nb_element = 0;
+    int is_error = 0;
+    int nb_open = 0;
+    int has_priority = 0;
+    int is_operator = 0;
+    int nb_item = 0;
+    int64_t value = 0;
+    int64_t value_expression = 0;
+    int64_t value_variable = 0;
+    int64_t value_binary = 0;
+    int64_t value_decimal = 0;
+    int64_t value_hexa = 0;
+    int64_t value_ascii = 0;
+    int64_t value_address = 0;
     int has_extra_hash = 0;
     char operator_c = 0;
     char *new_value_txt = NULL;
@@ -3547,9 +3582,20 @@ int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_express
     /** If there is no operator (<=> # + - / * &. ^), Delete the {} **/
     for(int i=(has_hash+has_less+has_more+has_exp+has_pipe); i<(int)strlen(cond_line->operand_txt); i++)
     {
-        if(cond_line->operand_txt[i] == '=' || /* cond_line->operand_txt[i] == '<' || cond_line->operand_txt[i] == '>' || cond_line->operand_txt[i] == '#' ||    A REFAIRE */
-           cond_line->operand_txt[i] == '+' || cond_line->operand_txt[i] == '-' || cond_line->operand_txt[i] == '/' || cond_line->operand_txt[i] == '*' ||
-           cond_line->operand_txt[i] == '.' || cond_line->operand_txt[i] == '&' || cond_line->operand_txt[i] == '^')
+        if(
+            cond_line->operand_txt[i] == '=' ||
+            /* cond_line->operand_txt[i] == '<' ||
+               cond_line->operand_txt[i] == '>' ||
+               cond_line->operand_txt[i] == '#' ||
+             A REFAIRE */
+            cond_line->operand_txt[i] == '+' ||
+            cond_line->operand_txt[i] == '-' ||
+            cond_line->operand_txt[i] == '/' ||
+            cond_line->operand_txt[i] == '*' ||
+            cond_line->operand_txt[i] == '.' ||
+            cond_line->operand_txt[i] == '&' ||
+            cond_line->operand_txt[i] == '^'
+        )
         {
             is_algebric = 1;
             break;
@@ -3576,7 +3622,12 @@ int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_express
     has_pipe = (expression[has_hash] == '|' || expression[has_hash] == '!') ? 1 : 0;
 
     /** Cut the string of characters into several elements (skips the #> <^ | from the beginning) **/
-    tab_element = DecodeOperandeAsElementTable(&expression[has_hash+has_less+has_more+has_exp+has_pipe],&nb_element,SEPARATOR_EVALUATE_EXPRESSION,cond_line);
+    tab_element = DecodeOperandeAsElementTable(
+        &expression[has_hash+has_less+has_more+has_exp+has_pipe],
+        &nb_element,
+        SEPARATOR_EVALUATE_EXPRESSION,
+        cond_line
+    );
     if(tab_element == NULL)
     {
         sprintf(buffer_error,"Impossible to decode Operand '%s' as element table",expression);
@@ -3595,7 +3646,8 @@ int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_express
     /** Converting non-separator elements to numeric values **/
     for(int i=0; i<nb_element; i++)
     {
-        if(!(strlen(tab_element[i]) == 1 && IsSeparator(tab_element[i][0],SEPARATOR_EVALUATE_EXPRESSION)))     /* The * = current address is going to be considered as a separator */
+        /* The * = current address is going to be considered as a separator */
+        if(!(strlen(tab_element[i]) == 1 && IsSeparator(tab_element[i][0],SEPARATOR_EVALUATE_EXPRESSION)))
         {
             /* If one or more # are at the beginning of the value, it is removed */
             has_extra_hash = 0;
@@ -4101,9 +4153,20 @@ int64_t EvalExpressionAsInteger(
 
     /** If there is no operator (<=> # + - / * &. ^), Delete the {} **/
     for(int i=(has_hash+has_less+has_more+has_exp+has_pipe); i<(int)strlen(expression_param); i++)
-        if(expression_param[i] == '=' || /* expression_param[i] == '<' || expression_param[i] == '>' || expression_param[i] == '#' ||    A REFAIRE */
-           expression_param[i] == '+' || expression_param[i] == '-' || expression_param[i] == '/' || expression_param[i] == '*' ||
-           expression_param[i] == '.' || expression_param[i] == '&' || expression_param[i] == '^')
+        if(expression_param[i] == '=' ||
+            /* expression_param[i] == '<' ||
+               expression_param[i] == '>' ||
+               expression_param[i] == '#' ||
+               A REFAIRE
+             */
+            expression_param[i] == '+' ||
+            expression_param[i] == '-' ||
+            expression_param[i] == '/' ||
+            expression_param[i] == '*' ||
+            expression_param[i] == '.' ||
+            expression_param[i] == '&' ||
+            expression_param[i] == '^'
+        )
         {
             is_algebric = 1;
             break;
@@ -4127,8 +4190,12 @@ int64_t EvalExpressionAsInteger(
     has_pipe = (expression[has_hash] == '|' || expression[has_hash] == '!') ? 1 : 0;
 
     /** Cut the string of characters into several elements (skips the #> <^ | from the beginning) **/
-    tab_element =
-        DecodeOperandeAsElementTable(&expression[has_hash+has_less+has_more+has_exp+has_pipe],&nb_element,SEPARATOR_EVALUATE_EXPRESSION,current_line);
+    tab_element = DecodeOperandeAsElementTable(
+        &expression[has_hash+has_less+has_more+has_exp+has_pipe],
+        &nb_element,
+        SEPARATOR_EVALUATE_EXPRESSION,
+        current_line
+    );
     if(tab_element == NULL)
     {
         sprintf(buffer_error_rtn,"Impossible to decode Operand '%s' as element table",expression);
@@ -4139,8 +4206,14 @@ int64_t EvalExpressionAsInteger(
     if(nb_element == 0 || (nb_element == 1 && strlen(tab_element[0]) == 0))
     {
         /* Particular case of BRK/COP/WDM sans signature */
-        if(!my_stricmp(current_line->opcode_txt,"BRK") || !my_stricmp(current_line->opcode_txt,"COP") || !my_stricmp(current_line->opcode_txt,"WDM"))
+        if(
+            !my_stricmp(current_line->opcode_txt,"BRK") ||
+            !my_stricmp(current_line->opcode_txt,"COP") ||
+            !my_stricmp(current_line->opcode_txt,"WDM")
+        )
+        {
             return(0);
+        }
         
         /* It's an Error */
         strcpy(buffer_error_rtn,"Empty expression");
@@ -4200,7 +4273,8 @@ int64_t EvalExpressionAsInteger(
     /** We will evaluate the members coded in Ascii, Binary, Hex, Label **/
     for(int i=0; i<nb_element; i++)
     {
-        if(!(strlen(tab_element[i]) == 1 && IsSeparator(tab_element[i][0],SEPARATOR_EVALUATE_EXPRESSION)))     /* The * = current address is going to be considered as a separator */
+        /* The * = current address is going to be considered as a separator */
+        if(!(strlen(tab_element[i]) == 1 && IsSeparator(tab_element[i][0],SEPARATOR_EVALUATE_EXPRESSION)))  
         {
             /* If one or more # are at the beginning of the value, it is removed */
             has_extra_hash = 0;
@@ -4277,7 +4351,14 @@ int64_t EvalExpressionAsInteger(
             else
             {
                 /** Do we detect a Label (External or Internal to the Segment) **/
-                value_address = GetAddressValue(&tab_element[i][has_extra_hash],current_line->address,&has_external,&is_dum_label,&is_fix_label,current_omfsegment);
+                value_address = GetAddressValue(
+                    &tab_element[i][has_extra_hash],
+                    current_line->address,
+                    &has_external,
+                    &is_dum_label,
+                    &is_fix_label,
+                    current_omfsegment
+                );
                 if(value_address == -2)
                 {
                     /* The address is not ready */
@@ -4310,7 +4391,12 @@ int64_t EvalExpressionAsInteger(
                         else
                         {
                             /* Error: Using External Label imposes some constraints in the expressions */
-                            sprintf(buffer_error_rtn,"You can't use 2 External labels (%s and %s) in the same expression",current_external->name,has_external->name);
+                            sprintf(
+                                buffer_error_rtn,
+                                "You can't use 2 External labels (%s and %s) in the same expression",
+                                current_external->name,
+                                has_external->name
+                            );
                             mem_free_table(nb_element,tab_element);
                             return(0);
                         }
@@ -4319,7 +4405,12 @@ int64_t EvalExpressionAsInteger(
                         if(nb_address > 1)
                         {
                             /* Error: Using External Label imposes some constraints in the expressions */
-                            sprintf(buffer_error_rtn,"You can't mix an External label (%s) with an Internal label (%s) the same expression",has_external->name,&tab_element[i][has_extra_hash]);
+                            sprintf(
+                                buffer_error_rtn,
+                                "You can't mix an External label (%s) with an Internal label (%s) the same expression",
+                                has_external->name,
+                                &tab_element[i][has_extra_hash]
+                            );
                             mem_free_table(nb_element,tab_element);
                             return(0);
                         }
@@ -4330,7 +4421,12 @@ int64_t EvalExpressionAsInteger(
                         if(current_external != NULL)
                         {
                             /* Error: Using External Label imposes some constraints in the expressions */
-                            sprintf(buffer_error_rtn,"You can't mix an Internal label (%s) with an External label (%s) the same expression",&tab_element[i][has_extra_hash],current_external->name);
+                            sprintf(
+                                buffer_error_rtn,
+                                "You can't mix an Internal label (%s) with an External label (%s) the same expression",
+                                &tab_element[i][has_extra_hash],
+                                current_external->name
+                            );
                             mem_free_table(nb_element,tab_element);
                             return(0);
                         }
@@ -4483,9 +4579,19 @@ int64_t EvalExpressionAsInteger(
         else
         {
             /** We must recognize the operator **/
-            if(strcmp(tab_element[i],"<") && strcmp(tab_element[i],"=") && strcmp(tab_element[i],">") && strcmp(tab_element[i],"#") &&
-               strcmp(tab_element[i],"+") && strcmp(tab_element[i],"-") && strcmp(tab_element[i],"*") && strcmp(tab_element[i],"/") &&
-               strcmp(tab_element[i],"!") && strcmp(tab_element[i],".") && strcmp(tab_element[i],"&"))
+            if(
+                strcmp(tab_element[i],"<") &&
+                strcmp(tab_element[i],"=") &&
+                strcmp(tab_element[i],">") &&
+                strcmp(tab_element[i],"#") &&
+                strcmp(tab_element[i],"+") &&
+                strcmp(tab_element[i],"-") &&
+                strcmp(tab_element[i],"*") &&
+                strcmp(tab_element[i],"/") &&
+                strcmp(tab_element[i],"!") &&
+                strcmp(tab_element[i],".") &&
+                strcmp(tab_element[i],"&")
+            )
             {
                 sprintf(buffer_error_rtn,"The '%s' is not a valid operator",tab_element[i]);
                 mem_free_table(nb_element,tab_element);
@@ -4590,7 +4696,12 @@ int64_t EvalExpressionAsInteger(
 /*********************************************************************************/
 int64_t EvaluateAlgebricExpression(char **tab_element, int current_element, int nb_element, int address, int *nb_item_rtn)
 {
-    int last_element = 0, is_value = 0, stack_pointer = 0, output_pointer = 0, value_index = 0, nb_open=0;
+    int last_element = 0;
+    int is_value = 0;
+    int stack_pointer = 0;
+    int output_pointer = 0;
+    int value_index = 0;
+    int nb_open = 0;
     int64_t value = 0;
     char address_line[256];
     int64_t value_tab[256];
@@ -4686,9 +4797,19 @@ int64_t EvaluateAlgebricExpression(char **tab_element, int current_element, int 
     for(int i=0; i<output_pointer; i++)
     {
         /* Operator */
-        if(!my_stricmp(output[i],"<") || !my_stricmp(output[i],"=") || !my_stricmp(output[i],">") || !my_stricmp(output[i],"#") ||
-           !my_stricmp(output[i],"+") || !my_stricmp(output[i],"-") || !my_stricmp(output[i],"*") || !my_stricmp(output[i],"/") ||
-           !my_stricmp(output[i],"&") || !my_stricmp(output[i],".") || !my_stricmp(output[i],"!"))
+        if(
+            !my_stricmp(output[i],"<") ||
+            !my_stricmp(output[i],"=") ||
+            !my_stricmp(output[i],">") ||
+            !my_stricmp(output[i],"#") ||
+            !my_stricmp(output[i],"+") ||
+            !my_stricmp(output[i],"-") ||
+            !my_stricmp(output[i],"*") ||
+            !my_stricmp(output[i],"/") ||
+            !my_stricmp(output[i],"&") ||
+            !my_stricmp(output[i],".") ||
+            !my_stricmp(output[i],"!")
+        )
         {
             if(!my_stricmp(output[i],"<"))
                 value_tab[value_index-2] = (value_tab[value_index-2] < value_tab[value_index-1]) ? 1 : 0;
@@ -4790,7 +4911,35 @@ int BuildBestMVXWord(DWORD value_1, DWORD value_2)
 /**********************************************************************/
 int IsPageDirectOpcode(char *opcode)
 {
-    char *opcode_list[] = {"ADC","AND","ASL","BIT","CMP","CPX","CPY","DEC","EOR","INC","LDA","LDX","LDY","LSR","ORA","ROL","ROR","SBC","STA","STX","STY","STZ","TRB","TSB",NULL};
+    // JASNOTE: Didn't I see/rant about this before?
+    char *opcode_list[] =
+    {
+        "ADC",
+        "AND",
+        "ASL",
+        "BIT",
+        "CMP",
+        "CPX",
+        "CPY",
+        "DEC",
+        "EOR",
+        "INC",
+        "LDA",
+        "LDX",
+        "LDY",
+        "LSR",
+        "ORA",
+        "ROL",
+        "ROR",
+        "SBC",
+        "STA",
+        "STX",
+        "STY",
+        "STZ",
+        "TRB",
+        "TSB",
+        NULL
+    };
 
     /* Find an Opcode accepting the Direct Page */
     for(int i = 0; opcode_list[i]; i++)
@@ -4808,10 +4957,19 @@ int IsPageDirectOpcode(char *opcode)
 int IsPageDirectAddressMode(int address_mode)
 {
     /* Search a Direct Page Addressing Mode */
-    if(address_mode == AM_DIRECT_PAGE || address_mode == AM_DIRECT_PAGE_INDEXED_X || address_mode == AM_DIRECT_PAGE_INDEXED_Y ||
-       address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_DIRECT_PAGE_INDIRECT_LONG || address_mode == AM_DIRECT_PAGE_INDEXED_X_INDIRECT ||
-       address_mode == AM_DIRECT_PAGE_INDIRECT_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDIRECT_LONG_INDEXED_Y)
+    if (
+        address_mode == AM_DIRECT_PAGE ||
+        address_mode == AM_DIRECT_PAGE_INDEXED_X ||
+        address_mode == AM_DIRECT_PAGE_INDEXED_Y ||
+        address_mode == AM_DIRECT_PAGE_INDIRECT ||
+        address_mode == AM_DIRECT_PAGE_INDIRECT_LONG ||
+        address_mode == AM_DIRECT_PAGE_INDEXED_X_INDIRECT ||
+        address_mode == AM_DIRECT_PAGE_INDIRECT_INDEXED_Y ||
+        address_mode == AM_DIRECT_PAGE_INDIRECT_LONG_INDEXED_Y
+    )
+    {
         return(1);
+    }
 
     /* Not found */
     return(0);
@@ -4838,11 +4996,27 @@ int isLabelForDirectPage(struct label *current_label, struct omf_segment *curren
         char buffer_error[1024] = "";
 
         /* We try to evaluate the address of the DUM */
-        dum_address = EvalExpressionAsInteger(current_label->line->dum_line->operand_txt, &buffer_error[0], current_label->line->dum_line, 2, &is_reloc, &byte_count, &bit_shift, &offset_reference, &address_long, &current_external, current_omfsegment);
+        dum_address = EvalExpressionAsInteger(
+            current_label->line->dum_line->operand_txt,
+            &buffer_error[0],
+            current_label->line->dum_line,
+            2,
+            &is_reloc,
+            &byte_count,
+            &bit_shift,
+            &offset_reference,
+            &address_long,
+            &current_external,
+            current_omfsegment
+        );
         if(strlen(buffer_error) == 0 && dum_address < 0x100)
+        {
             return(1);     /* can be */
+        }
         else
+        {
             return(0);     /* no */
+        }
     }
     /* Not a DP label if we are in a relative segment or it's a label definition (based on DUM check above running first) */
     else if(current_omfsegment->is_relative == 1 || current_label->line->label_txt[0])
@@ -4911,9 +5085,15 @@ int UseCurrentAddress(char *operand, char *buffer_error_rtn, struct source_line 
             continue;
 
         /** On reconnait immédiatement les Operators no ambigus + / - & . ! = **/
-        if(!my_stricmp(tab_element[i],"+") || !my_stricmp(tab_element[i],"-") || !my_stricmp(tab_element[i],"/") ||
-           !my_stricmp(tab_element[i],"&") || !my_stricmp(tab_element[i],".") || !my_stricmp(tab_element[i],"!") ||
-           !my_stricmp(tab_element[i],"="))
+        if(
+            !my_stricmp(tab_element[i],"+") ||
+            !my_stricmp(tab_element[i],"-") ||
+            !my_stricmp(tab_element[i],"/") ||
+            !my_stricmp(tab_element[i],"&") ||
+            !my_stricmp(tab_element[i],".") ||
+            !my_stricmp(tab_element[i],"!") ||
+            !my_stricmp(tab_element[i],"=")
+        )
         {
             is_value = 1;
             continue;
