@@ -98,7 +98,14 @@ int BuildAllCodeLine(int *has_error_rtn, struct omf_segment *current_omfsegment,
             /** Evaluation of the variable **/
             EvaluateVariableLine(current_line,current_omfsegment);
         }
-        else if(current_line->type == LINE_DIRECTIVE && (!my_stricmp(current_line->opcode_txt,"dsk") || !my_stricmp(current_line->opcode_txt,"lnk") || !my_stricmp(current_line->opcode_txt,"sav")))
+        else if(
+            current_line->type == LINE_DIRECTIVE &&
+            (
+                !my_stricmp(current_line->opcode_txt,"dsk") ||
+                !my_stricmp(current_line->opcode_txt,"lnk") ||
+                !my_stricmp(current_line->opcode_txt,"sav")
+            )
+        )
         {
             /** Keeps the first name found (if the name of the segment was not provided by the File Link) **/
             if(has_output_name == 0)
@@ -147,10 +154,18 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     int address_mode = DecodeAddressMode(current_line,&buffer_error[0],current_omfsegment);
     if(address_mode == AM_UNKOWN)
     {
-        sprintf(param->buffer_error,"Impossible to decode address mode for instruction '%s  %s' (line %d, file '%s')%s%s",
-                current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name,
-                (strlen(buffer_error) > 0) ? " : ":"",buffer_error);
+        sprintf(
+            param->buffer_error,
+            "Impossible to decode address mode for instruction '%s  %s' (line %d, file '%s')%s%s",
+            current_line->opcode_txt,
+            current_line->operand_txt,
+            current_line->file_line_number,
+            current_line->file->file_name,
+            (strlen(buffer_error) > 0) ? " : ":"",
+            buffer_error
+        );
         my_RaiseError(ERROR_RAISE,param->buffer_error);
+        return;
     }
     
     /** We will process all the Opcodes **/
@@ -210,8 +225,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x7F;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x79;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -309,8 +325,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x3F;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x39;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -489,8 +506,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"BRK"))
     {
-        if(address_mode == AM_IMPLICIT)      /* The BRK exists with or without a signature byte */
+        if(address_mode == AM_IMPLICIT)
         {
+            /* The BRK exists with or without a signature byte */
             current_line->nb_byte = 1;
             current_line->opcode_byte = 0x00;
             current_line->address_mode = AM_IMPLICIT;
@@ -621,8 +639,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xDF;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xD9;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -666,8 +685,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"COP"))
     {
-        if(address_mode == AM_IMPLICIT)  /* COP exists with or without signature byte */
+        if(address_mode == AM_IMPLICIT)
         {
+            /* COP exists with or without signature byte */
             current_line->nb_byte = 1;
             current_line->opcode_byte = 0x02;
             current_line->address_mode = AM_IMPLICIT;
@@ -840,8 +860,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x5F;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x59;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -934,16 +955,22 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->address_mode = AM_IMPLICIT;
         }
     }
-    else if(!my_stricmp(current_line->opcode_txt,"JMP") || !my_stricmp(current_line->opcode_txt,"JML") || !my_stricmp(current_line->opcode_txt,"JMPL"))
+    else if(
+        !my_stricmp(current_line->opcode_txt,"JMP") ||
+        !my_stricmp(current_line->opcode_txt,"JML") ||
+        !my_stricmp(current_line->opcode_txt,"JMPL")
+    )
     {
-        if(address_mode == AM_ABSOLUTE || address_mode == AM_DIRECT_PAGE)       /* We pass the $ 00 for a $ 0000 */
+        if(address_mode == AM_ABSOLUTE || address_mode == AM_DIRECT_PAGE)
         {
+            /* We pass the $ 00 for a $ 0000 */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x4C;
             current_line->address_mode = AM_ABSOLUTE;
         }
-        else if(address_mode == AM_ABSOLUTE_INDIRECT || address_mode == AM_DIRECT_PAGE_INDIRECT)       /* We pass the ($ 00) for one ($ 0000) */
+        else if(address_mode == AM_ABSOLUTE_INDIRECT || address_mode == AM_DIRECT_PAGE_INDIRECT)
         {
+            /* We pass the ($ 00) for one ($ 0000) */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x6C;
             current_line->address_mode = AM_ABSOLUTE_INDIRECT;
@@ -978,14 +1005,16 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"JSR"))
     {
-        if(address_mode == AM_ABSOLUTE || address_mode == AM_DIRECT_PAGE)       /* We pass the $ 00 for a $ 0000 */
+        if(address_mode == AM_ABSOLUTE || address_mode == AM_DIRECT_PAGE)
         {
+            /* We pass the $ 00 for a $ 0000 */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x20;
             current_line->address_mode = AM_ABSOLUTE;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_X_INDIRECT || address_mode == AM_DIRECT_PAGE_INDEXED_X_INDIRECT)       /* We pass the ($ 00, X) for one ($ 0000, X) */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_X_INDIRECT || address_mode == AM_DIRECT_PAGE_INDEXED_X_INDIRECT)
         {
+            /* We pass the ($ 00, X) for one ($ 0000, X) */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xFC;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_X_INDIRECT;
@@ -1023,14 +1052,16 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xA5;
             current_line->address_mode = AM_DIRECT_PAGE;
         }
-        else if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_ABSOLUTE_INDIRECT)   /* the LDA ($ 0000) must be interpreted as an LDA ($ 00) */
+        else if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_ABSOLUTE_INDIRECT)
         {
+            /* the LDA ($ 0000) must be interpreted as an LDA ($ 00) */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0xB2;
             current_line->address_mode = AM_DIRECT_PAGE_INDIRECT;
         }
-        else if(address_mode == AM_DIRECT_PAGE_INDIRECT_LONG || address_mode == AM_ABSOLUTE_INDIRECT_LONG)  /* the LDA [$ 0000] must be interpreted as an LDA [$ 00] */
+        else if(address_mode == AM_DIRECT_PAGE_INDIRECT_LONG || address_mode == AM_ABSOLUTE_INDIRECT_LONG)
         {
+            /* the LDA [$ 0000] must be interpreted as an LDA [$ 00] */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0xA7;
             current_line->address_mode = AM_DIRECT_PAGE_INDIRECT_LONG;
@@ -1047,8 +1078,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xBF;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)   /* we had an LDA $00,Y the LDA DP,Y Does not exist, so has to be LDA $0000,Y */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* we had an LDA $00,Y the LDA DP,Y Does not exist, so has to be LDA $0000,Y */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xB9;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -1104,8 +1136,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xA2;
             current_line->address_mode = AM_IMMEDIATE_16;
         }
-        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)   /* Long addressing in Abs addressing is cast */
+        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)
         {
+            /* Long addressing in Abs addressing is cast */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xAE;
             current_line->address_mode = AM_ABSOLUTE;
@@ -1143,8 +1176,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xA0;
             current_line->address_mode = AM_IMMEDIATE_16;
         }
-        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)   /* Long addressing in Abs addressing is cast */
+        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)
         {
+            /* Long addressing in Abs addressing is cast */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xAC;
             current_line->address_mode = AM_ABSOLUTE;
@@ -1284,8 +1318,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x1F;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x19;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -1329,8 +1364,15 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"PEA"))
     {
-        if(address_mode == AM_ABSOLUTE_LONG || address_mode == AM_ABSOLUTE || address_mode == AM_DIRECT_PAGE || address_mode == AM_IMMEDIATE_8 || address_mode == AM_IMMEDIATE_16)    /* One must be able to write PEA $1234 or PEA $0 or PEA #0 or PEA #$1234 */
+        if(
+            address_mode == AM_ABSOLUTE_LONG ||
+            address_mode == AM_ABSOLUTE ||
+            address_mode == AM_DIRECT_PAGE ||
+            address_mode == AM_IMMEDIATE_8 ||
+            address_mode == AM_IMMEDIATE_16
+        )
         {
+            /* One must be able to write PEA $1234 or PEA $0 or PEA #0 or PEA #$1234 */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xF4;
             current_line->address_mode = AM_ABSOLUTE;
@@ -1338,8 +1380,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"PEI"))
     {
-        if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_DIRECT_PAGE || address_mode == AM_ABSOLUTE)    /* We must be able to write PEI $12 or PEI ($12) or PEI Label */
+        if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_DIRECT_PAGE || address_mode == AM_ABSOLUTE)
         {
+            /* We must be able to write PEI $12 or PEI ($12) or PEI Label */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0xD4;
             current_line->address_mode = AM_DIRECT_PAGE_INDIRECT;
@@ -1347,8 +1390,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"PER"))
     {
-        if(address_mode == AM_ABSOLUTE || address_mode == AM_IMMEDIATE_16)    /* PER Label or PER #Label or PER $address => Relative Long as BRL */
-        {    
+        if(address_mode == AM_ABSOLUTE || address_mode == AM_IMMEDIATE_16)
+        {
+            /* PER Label or PER #Label or PER $address => Relative Long as BRL */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x62;
             current_line->address_mode = AM_PC_RELATIVE_LONG;
@@ -1473,8 +1517,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"REP"))
     {
-        if(address_mode == AM_IMMEDIATE_8 || address_mode == AM_IMMEDIATE_16 || address_mode == AM_DIRECT_PAGE)   /* We can come up with REP $30 */
+        if(address_mode == AM_IMMEDIATE_8 || address_mode == AM_IMMEDIATE_16 || address_mode == AM_DIRECT_PAGE)
         {
+            /* We can come up with REP $30 */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0xC2;
             current_line->address_mode = AM_IMMEDIATE_8;
@@ -1488,8 +1533,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x2A;
             current_line->address_mode = AM_IMPLICIT;
         }
-        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)   /* We cast the Long in Absolute */
+        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)
         {
+            /* We cast the Long in Absolute */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x2E;
             current_line->address_mode = AM_ABSOLUTE;
@@ -1521,8 +1567,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x6A;
             current_line->address_mode = AM_IMPLICIT;
         }
-        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)   /* We cast the Long in Absolute */
+        else if(address_mode == AM_ABSOLUTE || address_mode == AM_ABSOLUTE_LONG)
         {
+            /* We cast the Long in Absolute */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x6E;
             current_line->address_mode = AM_ABSOLUTE;
@@ -1629,8 +1676,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0xFF;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* $08,Y must also be interpreted as $ 0008, Y or DP, Y Does not exist */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0xF9;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -1701,8 +1749,10 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     }
     else if(!my_stricmp(current_line->opcode_txt,"SEP"))
     {
-        if(address_mode == AM_IMMEDIATE_8 || address_mode == AM_IMMEDIATE_16 || address_mode == AM_DIRECT_PAGE)         /* On peut tompber sur of SEP $20 */
+        if(address_mode == AM_IMMEDIATE_8 || address_mode == AM_IMMEDIATE_16 || address_mode == AM_DIRECT_PAGE)
         {
+            /* On peut tompber sur of SEP $20 */
+            // JASNOTE ...?!
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0xE2;
             current_line->address_mode = AM_IMMEDIATE_8;
@@ -1728,14 +1778,16 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x85;
             current_line->address_mode = AM_DIRECT_PAGE;
         }
-        else if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_ABSOLUTE_INDIRECT)             /* STA ($0000) can also be interpreted as STA ($00) */
+        else if(address_mode == AM_DIRECT_PAGE_INDIRECT || address_mode == AM_ABSOLUTE_INDIRECT)
         {
+            /* STA ($0000) can also be interpreted as STA ($00) */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0x92;
             current_line->address_mode = AM_DIRECT_PAGE_INDIRECT;
         }
-        else if(address_mode == AM_DIRECT_PAGE_INDIRECT_LONG || address_mode == AM_ABSOLUTE_INDIRECT_LONG)   /* STA [$0000] can also be interpreted as STA [$00] */
+        else if(address_mode == AM_DIRECT_PAGE_INDIRECT_LONG || address_mode == AM_ABSOLUTE_INDIRECT_LONG)
         {
+            /* STA [$0000] can also be interpreted as STA [$00] */
             current_line->nb_byte = 2;
             current_line->opcode_byte = 0x87;
             current_line->address_mode = AM_DIRECT_PAGE_INDIRECT_LONG;
@@ -1752,8 +1804,9 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
             current_line->opcode_byte = 0x9F;
             current_line->address_mode = AM_ABSOLUTE_LONG_INDEXED_X;
         }
-        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)    /* We pass the $00,Y for a $0000,Y */
+        else if(address_mode == AM_ABSOLUTE_INDEXED_Y || address_mode == AM_DIRECT_PAGE_INDEXED_Y)
         {
+            /* We pass the $00,Y for a $0000,Y */
             current_line->nb_byte = 3;
             current_line->opcode_byte = 0x99;
             current_line->address_mode = AM_ABSOLUTE_INDEXED_Y;
@@ -2057,10 +2110,18 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
     /* AM_UNKOWN = problem decoding address mode */
     if(current_line->nb_byte <= 0)
     {
-        sprintf(param->buffer_error,"Impossible to decode address mode for instruction '%s  %s' (line %d, file '%s')%s%s",
-                current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name,
-                (strlen(buffer_error) > 0) ? " : ":"",buffer_error);
+        sprintf(
+            param->buffer_error,
+            "Impossible to decode address mode for instruction '%s  %s' (line %d, file '%s')%s%s",
+            current_line->opcode_txt,
+            current_line->operand_txt,
+            current_line->file_line_number,
+            current_line->file->file_name,
+            (strlen(buffer_error) > 0) ? " : ":"",
+            buffer_error
+        );
         my_RaiseError(ERROR_RAISE,param->buffer_error);
+        return;
     }
 }
 
@@ -2068,13 +2129,36 @@ static void BuildOneCodeLineOpcode(struct source_line *current_line, struct omf_
 /**************************************************************************/
 /*  BuildOneCodeLineOperand() :  Creation of the Operand for a Code Line. */
 /**************************************************************************/
-static void BuildOneCodeLineOperand(struct source_line *current_line, int *has_error_rtn, struct omf_segment *current_omfsegment, struct omf_project *current_omfproject)
+static void BuildOneCodeLineOperand(
+    struct source_line *current_line,
+    int *has_error_rtn,
+    struct omf_segment *current_omfsegment,
+    struct omf_project *current_omfproject
+)
 {
-    int64_t operand_value_64 = 0, operand_value_1 = 0, operand_value_2 = 0;
-    int operand_size = 0, operand_value = 0, modif = 0, delta = 0, is_reloc_1 = 0, is_reloc_2 = 0, is_mvp_mvn = 0, is_multi_fixed = 0, line_address = 0;
-    DWORD AddressLong_1 = 0, AddressLong_2 = 0;
-    WORD OffsetPatch_1 = 0, OffsetPatch_2 = 0, OffsetReference_1 = 0, OffsetReference_2 = 0;
-    BYTE ByteCnt_1 = 0, ByteCnt_2 = 0, BitShiftCnt_1 = 0, BitShiftCnt_2 = 0;
+    int64_t operand_value_64 = 0;
+    int64_t operand_value_1 = 0;
+    int64_t operand_value_2 = 0;
+    int operand_size = 0;
+    int operand_value = 0;
+    int modif = 0;
+    int delta = 0;
+    int is_reloc_1 = 0;
+    int is_reloc_2 = 0;
+    int is_mvp_mvn = 0;
+    // JASNOTE: Set but never referenced.
+    //int is_multi_fixed = 0;
+    int line_address = 0;
+    DWORD AddressLong_1 = 0;
+    DWORD AddressLong_2 = 0;
+    WORD OffsetPatch_1 = 0;
+    WORD OffsetPatch_2 = 0;
+    WORD OffsetReference_1 = 0;
+    WORD OffsetReference_2 = 0;
+    BYTE ByteCnt_1 = 0;
+    BYTE ByteCnt_2 = 0;
+    BYTE BitShiftCnt_1 = 0;
+    BYTE BitShiftCnt_2 = 0;
     struct relocate_address *current_address_1 = NULL;
     struct relocate_address *current_address_2 = NULL;
     char *next_sep = NULL;
@@ -2086,7 +2170,8 @@ static void BuildOneCodeLineOperand(struct source_line *current_line, int *has_e
     
     /* Init */
     strcpy(buffer_error,"");
-    is_multi_fixed = current_omfproject->is_multi_fixed;
+    // JASNOTE: Set but never referenced.
+    //is_multi_fixed = current_omfproject->is_multi_fixed;
     
     /** We have nothing to do for lines without Operand (ERR, ...) **/
     if(current_line->nb_byte == 0 || current_line->nb_byte == 1)
@@ -2645,9 +2730,22 @@ static int DecodeAddressMode(struct source_line *current_line, char *error_buffe
 /***************************************************************************************************************/
 /*  GetOperandNbByte() :  Determine the number of bytes of a Operand and its Type (value or address to patch). */
 /***************************************************************************************************************/
-static int GetOperandNbByte(char *operand, struct source_line *current_line, int *is_address_rtn, char *buffer_error_rtn, struct omf_segment *current_omfsegment)
+static int GetOperandNbByte(
+    char *operand,
+    struct source_line *current_line,
+    int *is_address_rtn,
+    char *buffer_error_rtn,
+    struct omf_segment *current_omfsegment
+)
 {
-    int nb_element = 0, nb_max_byte = 0, nb_byte = 0, bit_mode = 0, value_format = 0, has_extra_hash = 0, has_long_addr = 0, is_block_copy = 0;
+    int nb_element = 0;
+    int nb_max_byte = 0;
+    int nb_byte = 0;
+    int bit_mode = 0;
+    int value_format = 0;
+    int has_extra_hash = 0;
+    int has_long_addr = 0;
+    int is_block_copy = 0;
     int is_address = 1;
     char **tab_element = NULL;
     strcpy(buffer_error_rtn,"");
@@ -2657,11 +2755,21 @@ static int GetOperandNbByte(char *operand, struct source_line *current_line, int
         return(0);
     
     /* Long Addressing? (LDAL, STAL...) */
-    if(!my_stricmp(current_line->opcode_txt,"ADCL") || !my_stricmp(current_line->opcode_txt,"ANDL") || !my_stricmp(current_line->opcode_txt,"CMPL") ||
-       !my_stricmp(current_line->opcode_txt,"EORL") || !my_stricmp(current_line->opcode_txt,"JML")  || !my_stricmp(current_line->opcode_txt,"JMPL") || 
-       !my_stricmp(current_line->opcode_txt,"LDAL") || !my_stricmp(current_line->opcode_txt,"ORAL") || !my_stricmp(current_line->opcode_txt,"SBCL") || 
-       !my_stricmp(current_line->opcode_txt,"STAL"))
+    if(
+        !my_stricmp(current_line->opcode_txt,"ADCL") ||
+        !my_stricmp(current_line->opcode_txt,"ANDL") ||
+        !my_stricmp(current_line->opcode_txt,"CMPL") ||
+        !my_stricmp(current_line->opcode_txt,"EORL") ||
+        !my_stricmp(current_line->opcode_txt,"JML")  ||
+        !my_stricmp(current_line->opcode_txt,"JMPL") ||
+        !my_stricmp(current_line->opcode_txt,"LDAL") ||
+        !my_stricmp(current_line->opcode_txt,"ORAL") ||
+        !my_stricmp(current_line->opcode_txt,"SBCL") ||
+        !my_stricmp(current_line->opcode_txt,"STAL")
+    )
+    {
         has_long_addr = 1;
+    }
     
     /* Copy of Block? (MVN, MVP) */
     if(current_line->opcode_byte == 0x54 /*MVN*/ || current_line->opcode_byte == 0x44 /*MVP*/)
@@ -2675,7 +2783,12 @@ static int GetOperandNbByte(char *operand, struct source_line *current_line, int
     int has_pipe = (operand[has_hash] == '|' || operand[has_hash] == '!') ? 1 : 0;
     
     /** Cut the string of characters into several elements (skips the #> <^ | from the beginning) **/
-    tab_element = DecodeOperandeAsElementTable(&operand[has_hash+has_less+has_more+has_exp+has_pipe],&nb_element,SEPARATOR_EVALUATE_EXPRESSION,current_line);
+    tab_element = DecodeOperandeAsElementTable(
+        &operand[has_hash+has_less+has_more+has_exp+has_pipe],
+        &nb_element,
+        SEPARATOR_EVALUATE_EXPRESSION,
+        current_line
+    );
     if(tab_element == NULL)
     {
         sprintf(buffer_error_rtn,"Impossible to decode Operand '%s' as element table",operand);
