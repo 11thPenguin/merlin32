@@ -272,12 +272,16 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             new_opcode = (struct item *) calloc(1,sizeof(struct item));
             if(new_opcode == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure item (opcode)");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure item (opcode)");
+                return;
+            }
             new_opcode->name = strdup((char *) data);
             if(new_opcode->name == NULL)
             {
                 free(new_opcode);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'name' from structure item (opcode)");
+                return;
             }
 
             /* Attaches the structure */
@@ -388,12 +392,16 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             new_data = (struct item *) calloc(1,sizeof(struct item));
             if(new_data == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure item (data)");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure item (data)");
+                return;
+            }
             new_data->name = strdup((char *) data);
             if(new_data->name == NULL)
             {
                 free(new_data);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'name' from structure item (data)");
+                return;
             }
 
             /* Attaches the structure */
@@ -504,12 +512,16 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             new_directive = (struct item *) calloc(1,sizeof(struct item));
             if(new_directive == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure item (directive)");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure item (directive)");
+                return;
+            }
             new_directive->name = strdup((char *) data);
             if(new_directive->name == NULL)
             {
                 free(new_directive);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'name' from structure item (directive)");
+                return;
             }
 
             /* Attaches the structure */
@@ -2636,12 +2648,18 @@ char *ReplaceInOperand(char *string, char *search_string, char *replace_string, 
     /** Allocate memory (it is expected to be wider) **/
     new_string = (char *) calloc(strlen(string)+nb_found*strlen(replace_string)+1,sizeof(char));
     if(new_string == NULL)
-        my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'new_string'");
+    {
+        my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'new_string'");
+        return NULL;
+    }
 
     /** We will cut the operand into several unitary elements **/
     tab_element = DecodeOperandeAsElementTable(string,&nb_element,separator_mode,current_line);
     if(tab_element == NULL)
-        my_RaiseError(ERROR_RAISE,"Impossible to decode operand as element table");
+    {
+        my_RaiseError(ERROR_RAISE, "Impossible to decode operand as element table");
+        return NULL;
+    }
     
     /** We rebuild the chain by replacing the values (case sensitive) **/
     for(i=0; i<nb_element; i++)
@@ -5333,7 +5351,10 @@ struct item *mem_alloc_item(char *name, int type)
     /* Allocation */
     struct item *current_item = (struct item *) calloc(1,sizeof(struct item));
     if(current_item == NULL)
-        my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure item");
+    {
+        my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure item");
+        return NULL;
+    }
     
     /* Fill out structure */
     current_item->name = strdup(name);
@@ -5341,6 +5362,7 @@ struct item *mem_alloc_item(char *name, int type)
     {
         free(current_item);
         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'name' from structure item");
+        return NULL;
     }
     current_item->type = type;
     
