@@ -17,9 +17,10 @@
 #include <windows.h>                    /* GetFileAttributes() SetFileAttributes() FILE_ATTRIBUTE_HIDDEN */
 
 // NOT THREAD SAFE
+// JASNOTE: Really? Returning a pointer to a local static variable isn't thread safe? Are we sure...?!
 wchar_t* TO_WIDESTR(char* pANSI)
 {
-static	wchar_t tempChars[4096];
+    static wchar_t tempChars[4096];
 
 	mbstowcs(&tempChars, pANSI, 4096);
 
@@ -328,7 +329,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_opcode);
             current_omfsegment->tab_opcode = (struct item **) calloc(current_omfsegment->nb_opcode,sizeof(struct item *));
             if(current_omfsegment->tab_opcode == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_opcode table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_opcode table");
+                return;
+            }
 
             /* Place the items */
             current_opcode = current_omfsegment->first_opcode;
@@ -455,7 +459,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_data);
             current_omfsegment->tab_data = (struct item **) calloc(current_omfsegment->nb_data,sizeof(struct item *));
             if(current_omfsegment->tab_data == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_data table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_data table");
+                return;
+            }
 
             /* Place the items */
             current_data = current_omfsegment->first_data;
@@ -582,7 +589,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_directive);
             current_omfsegment->tab_directive = (struct item **) calloc(current_omfsegment->nb_directive,sizeof(struct item *));
             if(current_omfsegment->tab_directive == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_directive table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_directive table");
+                return;
+            }
 
             /* Place the items */
             current_directive = current_omfsegment->first_directive;
@@ -652,12 +662,16 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             new_direqu = (struct item *) calloc(1,sizeof(struct item));
             if(new_direqu == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure item (equivalence)");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure item (equivalence)");
+                return;
+            }
             new_direqu->name = strdup((char *) data);
             if(new_direqu->name == NULL)
             {
                 free(new_direqu);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for 'name' from structure item (equivalence)");
+                return;
             }
 
             /* Attaches the structure */
@@ -704,7 +718,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_direqu);
             current_omfsegment->tab_direqu = (struct item **) calloc(current_omfsegment->nb_direqu,sizeof(struct item *));
             if(current_omfsegment->tab_direqu == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_direqu table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_direqu table");
+                return;
+            }
 
             /* Place the items */
             current_direqu = current_omfsegment->first_direqu;
@@ -811,7 +828,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_macro);
             current_omfsegment->tab_macro = (struct macro **) calloc(current_omfsegment->nb_macro,sizeof(struct macro *));
             if(current_omfsegment->tab_macro == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_macro table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_macro table");
+                return;
+            }
 
             /* Place the items */
             current_macro = current_omfsegment->first_macro;
@@ -924,7 +944,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             {
                 current_omfsegment->tab_label = (struct label **) calloc(current_omfsegment->nb_label,sizeof(struct label *));
                 if(current_omfsegment->tab_label == NULL)
-                    my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_label table");
+                {
+                    my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_label table");
+                    return;
+                }
 
                 /* Place the items */
                 current_label = current_omfsegment->first_label;
@@ -1058,7 +1081,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 current_omfsegment->tab_equivalence =
                     (struct equivalence **) calloc(current_omfsegment->nb_equivalence,sizeof(struct equivalence *));
                 if(current_omfsegment->tab_equivalence == NULL)
-                    my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_equivalence table");
+                {
+                    my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_equivalence table");
+                    return;
+                }
 
                 /* Place the items */
                 current_equivalence = current_omfsegment->first_equivalence;
@@ -1181,7 +1207,10 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
                 free(current_omfsegment->tab_variable);
             current_omfsegment->tab_variable = (struct variable **) calloc(current_omfsegment->nb_variable,sizeof(struct variable *));
             if(current_omfsegment->tab_variable == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_variable table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_variable table");
+                return;
+            }
 
             /* Place the items */
             current_variable = current_omfsegment->first_variable;
@@ -1225,12 +1254,18 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             else
             {
                 /* Search via the chain list */
-                for(current_variable=current_omfsegment->first_variable; current_variable; current_variable=current_variable->next)
-                    if(!strcmp(current_variable->name,(char *)data))
+                for(
+                    current_variable=current_omfsegment->first_variable;
+                    current_variable;
+                    current_variable=current_variable->next
+                )
+                {
+                    if (!strcmp(current_variable->name, (char*)data))
                     {
-                        *((struct variable **)value) = current_variable;
+                        *((struct variable**)value) = current_variable;
                         break;
                     }
+                }
             }
             break;
 
@@ -1295,9 +1330,13 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             if(current_omfsegment->tab_external)
                 free(current_omfsegment->tab_external);
-            current_omfsegment->tab_external = (struct external **) calloc(current_omfsegment->nb_external,sizeof(struct external *));
+            current_omfsegment->tab_external =
+                (struct external **) calloc(current_omfsegment->nb_external,sizeof(struct external *));
             if(current_omfsegment->tab_external == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for tab_external table");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for tab_external table");
+                return;
+            }
 
             /* Place the items */
             current_external = current_omfsegment->first_external;
@@ -1377,13 +1416,17 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
             /* Allocate memory */
             new_global = (struct global *) calloc(1,sizeof(struct global));
             if(new_global == NULL)
-                my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for global structure");
+            {
+                my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for global structure");
+                return;
+            }
             new_global->source_line = (struct source_line *) value;
             new_global->name = strdup((char *)data);
             if(new_global->name == NULL)
             {
                 free(new_global);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for global structure");
+                return;
             }
 
             /* Attaches the structure */
@@ -1842,8 +1885,12 @@ char **GetFolderFileList(char *folder_path, int *nb_file_rtn, int *is_error)
     }
 
     /* Adding names */
+    // JASNOTE: VS2022 thinks this is a buffer overrrun, and I think I agree?
+    //  Regardless, it's some funky logic.
     for(current_item = first_item; current_item; current_item = current_item->next)
+    {
         tab_file_name[nb_file++] = current_item->name;
+    }
 
     /* Release list (but not name) */
     for(current_item = first_item; current_item; current_item = next_item)
@@ -2773,21 +2820,52 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
     /** Determine the number of items (calcs max possible) **/
     for(int i = 0; i < opLen; i++)
     {
-        if(string[i] == '\'' || string[i] == '"' || string[i] == '[' || string[i] == ']' ||
-           string[i] == '+' || string[i] == '-' || string[i] == '/' || string[i] == '*' ||
-           string[i] == '%' || string[i] == '$' || string[i] == '#' || string[i] == '&' ||
-           string[i] == ',' || string[i] == ';' || string[i] == ':' || string[i] == ' ' ||
-           string[i] == '(' || string[i] == ')' || string[i] == '.' || string[i] == '^' ||
-           string[i] == '<' || string[i] == '>' || string[i] == '\\' || string[i] == '!' ||
-           string[i] == '|' || string[i] == '@' || string[i] == '{' || string[i] == '}' ||
-           string[i] == '=' || string[i] == '\t' || string[i] == 0x0A || string[i] == 0x0D)
+        if(
+            string[i] == '\'' ||
+            string[i] == '"' ||
+            string[i] == '[' ||
+            string[i] == ']' ||
+            string[i] == '+' ||
+            string[i] == '-' ||
+            string[i] == '/' ||
+            string[i] == '*' ||
+            string[i] == '%' ||
+            string[i] == '$' ||
+            string[i] == '#' ||
+            string[i] == '&' ||
+            string[i] == ',' ||
+            string[i] == ';' ||
+            string[i] == ':' ||
+            string[i] == ' ' ||
+            string[i] == '(' ||
+            string[i] == ')' ||
+            string[i] == '.' ||
+            string[i] == '^' ||
+            string[i] == '<' ||
+            string[i] == '>' ||
+            string[i] == '\\' ||
+            string[i] == '!' ||
+            string[i] == '|' ||
+            string[i] == '@' ||
+            string[i] == '{' ||
+            string[i] == '}' ||
+            string[i] == '=' ||
+            string[i] == '\t' ||
+            string[i] == 0x0A ||
+            string[i] == 0x0D
+        )
+        {
             nb_element += 2;
+        }
     }
     
     /* Allocate memory for table */
     tab_element = (char **)calloc(nb_element,sizeof(char *));
     if(tab_element == NULL)
-        my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for a table");
+    {
+        my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for a table");
+        return NULL;
+    }
 
     /*** Place the elements in the table ***/
     nb_element = 0;
@@ -2805,6 +2883,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                    return NULL;
                 }
                 nb_element++;
                 bufIdx = 0;
@@ -2844,6 +2923,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                    return NULL;
                 }
                 nb_element++;
                 bufIdx = 0;
@@ -2867,8 +2947,23 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 continue;
             }
 
-            /** Simple Case 2: Unambiguous Operators or Seperators (* may be the current address, but we will isolate as we would an operator) **/
-            if(string[i] == '+' || string[i] == '*' || string[i] == '/' || string[i] == '&' || string[i] == '.' || string[i] == '!' || string[i] == '{' || string[i] == '}' || string[i] == ' ' || string[i] == '\t' || string[i] == 0x0A || string[i] == 0x0D)
+            /** Simple Case 2: Unambiguous Operators or Seperators
+             *  (* may be the current address, but we will isolate as we would an operator)
+            **/
+            if(
+                string[i] == '+' ||
+                string[i] == '*' ||
+                string[i] == '/' ||
+                string[i] == '&' ||
+                string[i] == '.' ||
+                string[i] == '!' ||
+                string[i] == '{' ||
+                string[i] == '}' ||
+                string[i] == ' ' ||
+                string[i] == '\t' ||
+                string[i] == 0x0A ||
+                string[i] == 0x0D
+            )
             {
                 /* Finish the previous one */
                 buffer[bufIdx] = '\0';
@@ -2880,6 +2975,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                     {
                         mem_free_table(nb_element,tab_element);
                         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                        return NULL;
                     }
                     nb_element++;
 
@@ -2898,6 +2994,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                     {
                         mem_free_table(nb_element,tab_element);
                         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                        return NULL;
                     }
                     nb_element++;
                 }
@@ -2941,7 +3038,10 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 /* Case 3: An Operator Has A Separator The Precedes */
                 if(bufIdx == 0 && nb_element > 0)
                 {
-                    if(strlen(tab_element[nb_element-1]) == 1 && IsSeparator(tab_element[nb_element-1][0],SEPARATOR_EVALUATE_EXPRESSION))
+                    if(
+                        strlen(tab_element[nb_element-1]) == 1 && 
+                        IsSeparator(tab_element[nb_element-1][0],SEPARATOR_EVALUATE_EXPRESSION)
+                    )
                     {
                         /* We include the <> # as the first letter of the value to come */
                         buffer[bufIdx++] = string[i];
@@ -2961,6 +3061,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                    return NULL;
                 }
                 nb_element++;
 
@@ -2969,7 +3070,12 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
             }
 
             /* Stores the separator alone (unless it is a neutral separator: space, \ t, \ n) */
-            if(string[i] != ' ' && string[i] != 0x0A && string[i] != 0x0D && string[i] != '\t')
+            if(
+                string[i] != ' ' &&
+                string[i] != 0x0A &&
+                string[i] != 0x0D &&
+                string[i] != '\t'
+            )
             {
                 /* Adds the element */
                 buffer[0] = string[i];
@@ -2979,6 +3085,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                    return NULL;
                 }
                 nb_element++;
             }
@@ -2997,20 +3104,29 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
                     {
                         mem_free_table(nb_element,tab_element);
                         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                        return NULL;
                     }
                     nb_element++;
                 }
 
                 /* Stores the separator alone (unless it is a neutral separator: space, \ t, \ n) */
-                if(string[i] != ' ' && string[i] != 0x0A && string[i] != 0x0D && string[i] != '\t')
+                if(
+                    string[i] != ' ' &&
+                    string[i] != 0x0A &&
+                    string[i] != 0x0D &&
+                    string[i] != '\t'
+                )
                 {
                     buffer[0] = string[i];
                     buffer[1] = '\0';
+                    // JASNOTE: VS2022 thinks this is a buffer overrrun, and I think I agree?
+                    //  Regardless, it's some funky logic.
                     tab_element[nb_element] = strdup(buffer);
                     if(tab_element[nb_element] == NULL)
                     {
                         mem_free_table(nb_element,tab_element);
                         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+                        return NULL;
                     }
                     nb_element++;
                 }
@@ -3036,6 +3152,7 @@ char **DecodeOperandeAsElementTable(char *string, int *nb_element_rtn, int separ
         {
             mem_free_table(nb_element,tab_element);
             my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for an item into a table");
+            return NULL;
         }
         nb_element++;
     }
@@ -3804,7 +3921,9 @@ int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_express
         /* We can remove the - */
         free(tab_element[0]);
         for(int i = 1; i < nb_element; i++)
-            tab_element[i-1] = tab_element[i];
+        {
+            tab_element[i - 1] = tab_element[i];
+        }
         nb_element--;
     }
 
@@ -3910,9 +4029,19 @@ int QuickConditionEvaluate(struct source_line *cond_line, int64_t *value_express
         else
         {
             /** We must recognize the operator **/
-            if(strcmp(tab_element[i],"<") && strcmp(tab_element[i],"=") && strcmp(tab_element[i],">") && strcmp(tab_element[i],"#") &&
-               strcmp(tab_element[i],"+") && strcmp(tab_element[i],"-") && strcmp(tab_element[i],"*") && strcmp(tab_element[i],"/") &&
-               strcmp(tab_element[i],"!") && strcmp(tab_element[i],".") && strcmp(tab_element[i],"&"))
+            if(
+                strcmp(tab_element[i],"<") &&
+                strcmp(tab_element[i],"=") &&
+                strcmp(tab_element[i],">") &&
+                strcmp(tab_element[i],"#") &&
+                strcmp(tab_element[i],"+") &&
+                strcmp(tab_element[i],"-") &&
+                strcmp(tab_element[i],"*") &&
+                strcmp(tab_element[i],"/") &&
+                strcmp(tab_element[i],"!") &&
+                strcmp(tab_element[i],".") &&
+                strcmp(tab_element[i],"&")
+            )
             {
                 sprintf(buffer_error,"The '%s' is not a valid operator",tab_element[i]);
                 mem_free_table(nb_element,tab_element);
@@ -3950,12 +4079,20 @@ int64_t GetQuickValue(char *name, struct source_line *cond_line, int *is_error_r
 
     /** Create quick access table to the lines **/
     /* Number of valid lines */
-    for(struct source_line *current_line = current_omfsegment->first_file->first_line; current_line; current_line=current_line->next)
+    for(
+        struct source_line *current_line = current_omfsegment->first_file->first_line;
+        current_line;
+        current_line=current_line->next
+    )
     {
         if(current_line == cond_line)
+        {
             break;
+        }
         if(current_line->is_valid == 0)
+        {
             continue;
+        }
         nb_valid_line++;
     }
     /* Allocate memory */
@@ -3967,12 +4104,20 @@ int64_t GetQuickValue(char *name, struct source_line *cond_line, int *is_error_r
     }
     /* Fill out structure */
     int lineIdx = 0;
-    for(struct source_line *current_line = current_omfsegment->first_file->first_line; current_line; current_line=current_line->next)
+    for(
+        struct source_line *current_line = current_omfsegment->first_file->first_line;
+        current_line;
+        current_line=current_line->next
+    )
     {
         if(current_line == cond_line)
+        {
             break;
+        }
         if(current_line->is_valid == 0)
+        {
             continue;
+        }
         tab_line[lineIdx++] = current_line;
     }
 
@@ -4175,12 +4320,18 @@ int64_t EvalExpressionAsInteger(
     {
         int j = 0;
         for(int i=0; i<(int)strlen(expression_param); i++)
-            if(expression_param[i] != '{' && expression_param[i] != '}')
+        {
+            if (expression_param[i] != '{' && expression_param[i] != '}')
+            {
                 expression[j++] = expression_param[i];
+            }
+        }
         expression[j] = '\0';
     }
     else
-        strcpy(expression,expression_param);
+    {
+        strcpy(expression, expression_param);
+    }
 
     /** Process the # < > ^ | **/
     has_hash = (expression[0] == '#') ? 1 : 0;
@@ -4236,6 +4387,7 @@ int64_t EvalExpressionAsInteger(
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                    return(0);
                 }
                 free(tab_element[i]);
                 tab_element[i] = new_value_txt;
@@ -4264,6 +4416,7 @@ int64_t EvalExpressionAsInteger(
             {
                 mem_free_table(nb_element,tab_element);
                 my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                return(0);
             }
             free(tab_element[i]);
             tab_element[i] = new_value_txt;
@@ -4300,6 +4453,7 @@ int64_t EvalExpressionAsInteger(
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                    return(0);
                 }
                 free(tab_element[i]);
                 tab_element[i] = new_value_txt;
@@ -4322,6 +4476,7 @@ int64_t EvalExpressionAsInteger(
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                    return(0);
                 }
                 free(tab_element[i]);
                 tab_element[i] = new_value_txt;
@@ -4344,6 +4499,7 @@ int64_t EvalExpressionAsInteger(
                 {
                     mem_free_table(nb_element,tab_element);
                     my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                    return(0);
                 }
                 free(tab_element[i]);
                 tab_element[i] = new_value_txt;
@@ -4364,6 +4520,7 @@ int64_t EvalExpressionAsInteger(
                     /* The address is not ready */
                     sprintf(buffer_error_rtn,"Address of label '%s' is unknown at this time",&tab_element[i][has_extra_hash]);
                     mem_free_table(nb_element,tab_element);
+                    // JASNOTE: WTF?
                     return(0xFFFF);
                 }
                 else if(value_address != -1)
@@ -4375,6 +4532,7 @@ int64_t EvalExpressionAsInteger(
                     {
                         mem_free_table(nb_element,tab_element);
                         my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                        return(0);
                     }
                     free(tab_element[i]);
                     tab_element[i] = new_value_txt;
@@ -4445,6 +4603,7 @@ int64_t EvalExpressionAsInteger(
                         {
                             mem_free_table(nb_element,tab_element);
                             my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for new 'value_txt'");
+                            return(0);
                         }
                         free(tab_element[i]);
                         tab_element[i] = new_value_txt;
@@ -4832,7 +4991,11 @@ int64_t EvaluateAlgebricExpression(char **tab_element, int current_element, int 
             else if(!my_stricmp(output[i],"."))
                 value_tab[value_index-2] = value_tab[value_index-2] | value_tab[value_index-1];
             else if(!my_stricmp(output[i],"!"))
-                value_tab[value_index-2] = value_tab[value_index-2] ^ value_tab[value_index-1];
+            {
+                // JASNOTE: VS2022 thinks this is a buffer overrrun, and I think I agree?
+                //  Regardless, it's some funky logic.
+                value_tab[value_index - 2] = value_tab[value_index - 2] ^ value_tab[value_index - 1];
+            }
             value_index--;
         }
         else
@@ -5526,6 +5689,7 @@ void BuildAbsolutePath(char *file_name, char *folder_path, char *file_path_rtn)
 /**************************************************/
 void mem_free_list(int nb_element, char **element_tab)
 {
+    // JASNOTE: see mem_free_table() 
     if(element_tab)
     {
         for(int i = 0; i < nb_element; i++)
@@ -5829,6 +5993,7 @@ void mem_free_param(struct parameter *param)
 /**************************************************/
 void mem_free_table(int nb_item, char **table)
 {
+    // JASNOTE: see mem_free_list() 
     if(table == NULL)
         return;
 
