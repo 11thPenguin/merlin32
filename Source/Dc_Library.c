@@ -3016,12 +3016,14 @@ int IsSeparator(char c, int separator_mode)
 /**********************************************************************/
 BYTE GetByteValue(char *value_txt)
 {
-    BYTE value_byte;
+    BYTE value_byte = 0;
     int i, j;
     unsigned int value_int = 0;
     int offset = 0;
     int is_hexa = 0;
     int is_binary = 0;
+
+    int num_sscanf_values = 0;
 
     /* Do you have a # first? */
     if(value_txt[offset] == '#')
@@ -3054,12 +3056,19 @@ BYTE GetByteValue(char *value_txt)
         }
     }
     else if(is_hexa)
-        sscanf(&value_txt[offset],"%X",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%X", &value_int);
+    }
     else
-        sscanf(&value_txt[offset],"%d",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%d", &value_int);
+    }
 
     /* Conversion to BYTE */
-    value_byte = (BYTE) value_int;
+    if (0 != num_sscanf_values)
+    {
+        value_byte = (BYTE)value_int;
+    }
 
     /* Returns the value */
     return(value_byte);
@@ -3071,12 +3080,14 @@ BYTE GetByteValue(char *value_txt)
 /*******************************************************************/
 WORD GetWordValue(char *value_txt)
 {
-    WORD value_wd;
+    WORD value_wd = 0;
     int i, j;
     unsigned int value_int = 0;
     int offset = 0;
     int is_hexa = 0;
     int is_binary = 0;
+
+    int num_sscanf_values = 0;
 
     /* Do you have a # first? */
     if(value_txt[offset] == '#')
@@ -3109,12 +3120,19 @@ WORD GetWordValue(char *value_txt)
         }
     }
     else if(is_hexa)
-        sscanf(&value_txt[offset],"%X",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%X", &value_int);
+    }
     else
-        sscanf(&value_txt[offset],"%d",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%d", &value_int);
+    }
 
     /* Conversion to WORD */
-    value_wd = (WORD) value_int;
+    if (0 != num_sscanf_values)
+    {
+        value_wd = (WORD)value_int;
+    }
 
     /* Returns the value */
     return(value_wd);
@@ -3126,12 +3144,14 @@ WORD GetWordValue(char *value_txt)
 /*********************************************************************/
 DWORD GetDwordValue(char *value_txt)
 {
-    DWORD value_dwd;
+    DWORD value_dwd = 0;
     int i, j;
     unsigned int value_int = 0;
     int offset = 0;
     int is_hexa = 0;
     int is_binary = 0;
+
+    int num_sscanf_values = 0;
 
     /* Do you have a # first? */
     if(value_txt[offset] == '#')
@@ -3164,12 +3184,19 @@ DWORD GetDwordValue(char *value_txt)
         }
     }
     else if(is_hexa)
-        sscanf(&value_txt[offset],"%X",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%X", &value_int);
+    }
     else
-        sscanf(&value_txt[offset],"%d",&value_int);
+    {
+        num_sscanf_values = sscanf(&value_txt[offset], "%d", &value_int);
+    }
 
     /* Conversion to DWORD */
-    value_dwd = (DWORD) value_int;
+    if (0 != num_sscanf_values)
+    {
+        value_dwd = (DWORD)value_int;
+    }
 
     /* Returns the value */
     return(value_dwd);
