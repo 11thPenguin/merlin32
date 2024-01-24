@@ -26,46 +26,63 @@ int BuildAllDataLineSize(struct omf_segment *current_omfsegment)
   struct source_file *first_file;
   struct source_line *current_line;
   char buffer_error[1024];
+
   struct parameter *param;
   my_Memory(MEMORY_GET_PARAM,&param,NULL,NULL);
 
   /* Recover the 1st source file */
   my_Memory(MEMORY_GET_FILE,&first_file,NULL,current_omfsegment);
   if(first_file == NULL)
-    return(0);
+  {
+      return(0);
+  }
 
   /*** Process all lines Data to calculate their size ***/
   for(current_line=first_file->first_line; current_line; current_line=current_line->next)
-    {
+  {
       /* This line is invalid */
       if(current_line->is_valid == 0)
-        {
+      {
           current_line->nb_byte = 0;
           continue;
-        }
+      }
 
       /** Lines of Data **/
       if(current_line->type == LINE_DATA)
-        {
+      {
           /** Determine the size of Operand **/
           BuildOneDataLineSize(current_line,buffer_error,current_omfsegment);
           if(strlen(buffer_error) > 0)
             {
-              sprintf(param->buffer_error,"Impossible to decode Data format for instruction '%s  %s' (line %d, file '%s') : %s",
-                      current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name,buffer_error);
+              sprintf(
+                  param->buffer_error,
+                  "Impossible to decode Data format for instruction '%s  %s' (line %d, file '%s') : %s",
+                  current_line->opcode_txt,
+                  current_line->operand_txt,
+                  current_line->file_line_number,
+                  current_line->file->file_name,
+                  buffer_error
+              );
               my_RaiseError(ERROR_RAISE,param->buffer_error);
+              return(1);
             }
 
           /** Allocate memory for the Data **/
           current_line->data = (unsigned char *) calloc(current_line->nb_byte+1,sizeof(unsigned char));
           if(current_line->data == NULL)
             {
-              sprintf(param->buffer_error,"Impossible to allocate memory to store Data line '%s  %s' (line %d, file '%s')",
-                      current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name);
+              sprintf(
+                  param->buffer_error,
+                  "Impossible to allocate memory to store Data line '%s  %s' (line %d, file '%s')",
+                  current_line->opcode_txt,
+                  current_line->operand_txt,
+                  current_line->file_line_number,
+                  current_line->file->file_name);
               my_RaiseError(ERROR_RAISE,param->buffer_error);
+              return(1);
             }
-        }
-    }
+      }
+  }
 
   /* OK */
   return(0);
@@ -80,39 +97,52 @@ int BuildAllDataLine(struct omf_segment *current_omfsegment)
   struct source_file *first_file;
   struct source_line *current_line;
   char buffer_error[1024];
+
   struct parameter *param;
   my_Memory(MEMORY_GET_PARAM,&param,NULL,NULL);
 
   /* Recover the 1st source file */
   my_Memory(MEMORY_GET_FILE,&first_file,NULL,current_omfsegment);
   if(first_file == NULL)
-    return(0);
+  {
+      return(0);
+  }
 
   /*** Process all lines Data to create the Operand ***/
   for(current_line=first_file->first_line; current_line; current_line=current_line->next)
-    {
+  {
       /* This line is invalid */
       if(current_line->is_valid == 0 || current_line->is_dum == 1)
-        continue;
+      {
+          continue;
+      }
 
       /** Lines of Data **/
       if(current_line->type == LINE_DATA)
-        {
+      {
           /** Creation of Operand data **/
           BuildOneDataLineOperand(current_line,buffer_error,current_omfsegment);
           if(strlen(buffer_error) > 0)
-            {
-              sprintf(param->buffer_error,"Impossible to build Data line '%s  %s' (line %d, file '%s') : %s",
-                      current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name,buffer_error);
+          {
+              sprintf(
+                  param->buffer_error,
+                  "Impossible to build Data line '%s  %s' (line %d, file '%s') : %s",
+                  current_line->opcode_txt,
+                  current_line->operand_txt,
+                  current_line->file_line_number,
+                  current_line->file->file_name,
+                  buffer_error
+              );
               my_RaiseError(ERROR_RAISE,param->buffer_error);
-            }
-        }
+              return(1);
+          }
+      }
       else if(current_line->type == LINE_VARIABLE)
-        {
+      {
           /** Evaluation of the variable **/
           EvaluateVariableLine(current_line,current_omfsegment);
-        }
-    }
+      }
+  }
 
   /* OK */
   return(0);
@@ -124,10 +154,16 @@ int BuildAllDataLine(struct omf_segment *current_omfsegment)
 /*****************************************************************/
 static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_error_rtn, struct omf_segment *current_omfsegment)
 {
-    BYTE byte_count = 0, bit_shift = 0;
+    BYTE byte_count = 0;
+    BYTE bit_shift = 0;
     WORD offset_reference = 0;
     DWORD address_long = 0;
-    int nb_element = 0, nb_valid_element = 0, nb_byte = 0, nb_nibble = 0, length = 0, is_reloc = 0;
+    int nb_element = 0;
+    int nb_valid_element = 0;
+    int nb_byte = 0;
+    int nb_nibble = 0;
+    int length = 0;
+    int is_reloc = 0;
     char *next_char = NULL;
     char **tab_element = NULL;
     struct external *current_external = NULL;
@@ -139,40 +175,80 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
     strcpy(buffer_error_rtn,"");
 
     /*** We will recognize the different types of Data ***/
-    if(!my_stricmp(current_line->opcode_txt,"DA") || !my_stricmp(current_line->opcode_txt,"DW") || !my_stricmp(current_line->opcode_txt,"DDB") ||
-       !my_stricmp(current_line->opcode_txt,"DFB") || !my_stricmp(current_line->opcode_txt,"DB") ||
-       !my_stricmp(current_line->opcode_txt,"ADR") || !my_stricmp(current_line->opcode_txt,"ADRL"))
+    if(
+        !my_stricmp(current_line->opcode_txt,"DA") ||
+        !my_stricmp(current_line->opcode_txt,"DW") ||
+        !my_stricmp(current_line->opcode_txt,"DDB") ||
+        !my_stricmp(current_line->opcode_txt,"DFB") ||
+        !my_stricmp(current_line->opcode_txt,"DB") ||
+        !my_stricmp(current_line->opcode_txt,"ADR") ||
+        !my_stricmp(current_line->opcode_txt,"ADRL")
+    )
     {
         /* Cut into individual elements */
-        tab_element = DecodeOperandeAsElementTable(current_line->operand_txt,&nb_element,SEPARATOR_DATA_VALUES,current_line);
+        tab_element =
+            DecodeOperandeAsElementTable(
+                current_line->operand_txt,
+                &nb_element,
+                SEPARATOR_DATA_VALUES,
+                current_line
+        );
         if(tab_element == NULL)
         {
-            sprintf(buffer_error_rtn,"Impossible to decode Operand '%s' as element table",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Impossible to decode Operand '%s' as element table",
+                current_line->operand_txt
+            );
             return;
         }
 
         /** Analyze the elements **/
         for(int i=0; i<nb_element; i++)
+        {
             if(strlen(tab_element[i]) == 0)
             {
                 mem_free_table(nb_element,tab_element);
-                sprintf(buffer_error_rtn,"Empty Data in Operand '%s'",current_line->operand_txt);
+                sprintf(
+                    buffer_error_rtn,
+                    "Empty Data in Operand '%s'",
+                    current_line->operand_txt
+                );
                 return;
             }
             else if(!strcmp(tab_element[i],","))
+            {
                 ;                     /* Nothing to do */
+            }
             else
+            {
                 nb_valid_element++;   /* We count matches only valid elements */
-
+            }
+        }
         /** Get the size of the Data Part **/
-        if(!my_stricmp(current_line->opcode_txt,"DA") || !my_stricmp(current_line->opcode_txt,"DW") || !my_stricmp(current_line->opcode_txt,"DDB"))
-            current_line->nb_byte = 2*nb_valid_element;
-        else if(!my_stricmp(current_line->opcode_txt,"DFB") || !my_stricmp(current_line->opcode_txt,"DB"))
+        if(
+            !my_stricmp(current_line->opcode_txt,"DA") ||
+            !my_stricmp(current_line->opcode_txt,"DW") ||
+            !my_stricmp(current_line->opcode_txt,"DDB")
+        )
+        {
+            current_line->nb_byte = 2 * nb_valid_element;
+        }
+        else if(
+            !my_stricmp(current_line->opcode_txt,"DFB") ||
+            !my_stricmp(current_line->opcode_txt,"DB")
+        )
+        {
             current_line->nb_byte = nb_valid_element;
+        }
         else if(!my_stricmp(current_line->opcode_txt,"ADR"))
-            current_line->nb_byte = 3*nb_valid_element;
+        {
+            current_line->nb_byte = 3 * nb_valid_element;
+        }
         else if(!my_stricmp(current_line->opcode_txt,"ADRL"))
-            current_line->nb_byte = 4*nb_valid_element;
+        {
+            current_line->nb_byte = 4 * nb_valid_element;
+        }
 
         /* Memory release */
         mem_free_table(nb_element,tab_element);
@@ -182,7 +258,10 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
         /** Counts the number of characters / validates the data **/
         for(int i=0; i<(int)strlen(current_line->operand_txt); i++)
         {
-            if((current_line->operand_txt[i] >= '0' && current_line->operand_txt[i] <= '9') || (toupper(current_line->operand_txt[i]) >= 'A' && toupper(current_line->operand_txt[i]) <= 'F'))
+            if(
+                (current_line->operand_txt[i] >= '0' && current_line->operand_txt[i] <= '9') ||
+                (toupper(current_line->operand_txt[i]) >= 'A' && toupper(current_line->operand_txt[i]) <= 'F')
+            )
             {
                 nb_nibble++;
                 if(nb_nibble == 2)
@@ -195,19 +274,31 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
             {
                 if(nb_nibble == 1)
                 {
-                    sprintf(buffer_error_rtn,"Wrong Hex Format Data in Operand '%s'",current_line->operand_txt);
+                    sprintf(
+                        buffer_error_rtn,
+                        "Wrong Hex Format Data in Operand '%s'",
+                        current_line->operand_txt
+                    );
                     return;
                 }
             }
             else
             {
-                sprintf(buffer_error_rtn,"Wrong Hex Format Data in Operand '%s'",current_line->operand_txt);
+                sprintf(
+                    buffer_error_rtn,
+                    "Wrong Hex Format Data in Operand '%s'",
+                    current_line->operand_txt
+                );
                 return;
             }
         }
         if(nb_nibble == 1)
         {
-            sprintf(buffer_error_rtn,"Wrong Hex Format Data in Operand '%s'",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Wrong Hex Format Data in Operand '%s'",
+                current_line->operand_txt
+            );
             return;
         }
 
@@ -217,17 +308,31 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
     else if(!my_stricmp(current_line->opcode_txt,"DS"))
     {
         /* Cut into individual elements */
-        tab_element = DecodeOperandeAsElementTable(current_line->operand_txt,&nb_element,SEPARATOR_DATA_VALUES,current_line);
+        tab_element =
+            DecodeOperandeAsElementTable(
+                current_line->operand_txt,
+                &nb_element,
+                SEPARATOR_DATA_VALUES,
+                current_line
+        );
         if(tab_element == NULL)
         {
-            sprintf(buffer_error_rtn,"Impossible to decode Operand '%s' as element table",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Impossible to decode Operand '%s' as element table",
+                current_line->operand_txt
+            );
             return;
         }
         /* DS 2 or DS 2,FF */
         if(nb_element != 1 && nb_element != 3)
         {
             mem_free_table(nb_element,tab_element);
-            sprintf(buffer_error_rtn,"Wrong DS Format Data in Operand '%s'",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Wrong DS Format Data in Operand '%s'",
+                current_line->operand_txt
+            );
             return;
         }
 
@@ -240,22 +345,46 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
         else
         {
             /* The first value is evaluated as integer */
-            nb_byte = (int) EvalExpressionAsInteger(tab_element[0],buffer_error,current_line,1,&is_reloc,&byte_count,&bit_shift,&offset_reference,&address_long,&current_external,current_omfsegment);
+            nb_byte =
+                (int)EvalExpressionAsInteger(
+                    tab_element[0],
+                    buffer_error,
+                    current_line,
+                    1,
+                    &is_reloc,
+                    &byte_count,
+                    &bit_shift,
+                    &offset_reference,
+                    &address_long,
+                    &current_external,
+                    current_omfsegment
+            );
             if(strlen(buffer_error) > 0 && nb_byte == 0xFFFF)
             {
-                /** Get the size of the Data Part => the evaluation will have to be repeated later when calculating the addresses **/
+                /** Get the size of the Data Part => the 
+                evaluation will have to be repeated later when calculating the addresses **/
                 current_line->nb_byte = 0xFFFFF;  /* 5 F */
             }
             else if(strlen(buffer_error) > 0)
             {
                 mem_free_table(nb_element,tab_element);
-                sprintf(buffer_error_rtn,"Wrong DS Format Data in Operand '%s' (%s)",current_line->operand_txt,buffer_error);
+                sprintf(
+                    buffer_error_rtn,
+                    "Wrong DS Format Data in Operand '%s' (%s)",
+                    current_line->operand_txt,
+                    buffer_error
+                );
                 return;
             }
             else if(nb_byte < 0)
             {
                 mem_free_table(nb_element,tab_element);
-                sprintf(buffer_error_rtn,"Wrong DS Value in Operand '%s' : Negative value (%d)",current_line->operand_txt,nb_byte);
+                sprintf(
+                    buffer_error_rtn,
+                    "Wrong DS Value in Operand '%s' : Negative value (%d)",
+                    current_line->operand_txt,
+                    nb_byte
+                );
                 return;
             }
             else
@@ -268,19 +397,32 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
     /**************************/
     /** Character strings **/
     /**************************/
-    else if(!my_stricmp(current_line->opcode_txt,"ASC") || !my_stricmp(current_line->opcode_txt,"DCI") || !my_stricmp(current_line->opcode_txt,"INV") || !my_stricmp(current_line->opcode_txt,"FLS") ||
-            !my_stricmp(current_line->opcode_txt,"STR") || !my_stricmp(current_line->opcode_txt,"STRL"))
+    else if(
+        !my_stricmp(current_line->opcode_txt,"ASC") ||
+        !my_stricmp(current_line->opcode_txt,"DCI") ||
+        !my_stricmp(current_line->opcode_txt,"INV") ||
+        !my_stricmp(current_line->opcode_txt,"FLS") ||
+        !my_stricmp(current_line->opcode_txt,"STR") ||
+        !my_stricmp(current_line->opcode_txt,"STRL")
+    )
     {
         /** Count matches the characters in the "" and Hex outside **/
         for(int i=0; i<(int)strlen(current_line->operand_txt); i++)
         {
             /* Start of zone */
-            if(current_line->operand_txt[i] == '\'' || current_line->operand_txt[i] == '"')
+            if(
+                current_line->operand_txt[i] == '\'' ||
+                current_line->operand_txt[i] == '"'
+            )
             {
                 /* Hex precedes w/o completion */
                 if(nb_nibble == 1)
                 {
-                    sprintf(buffer_error_rtn,"Wrong Data String format in Operand '%s'",current_line->operand_txt);
+                    sprintf(
+                        buffer_error_rtn,
+                        "Wrong Data String format in Operand '%s'",
+                        current_line->operand_txt
+                    );
                     return;
                 }
 
@@ -288,7 +430,11 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
                 next_char = strchr(&current_line->operand_txt[i+1],current_line->operand_txt[i]);
                 if(next_char == NULL)
                 {
-                    sprintf(buffer_error_rtn,"Wrong String Format Data in Operand '%s' : End-of-String character is missing",current_line->operand_txt);
+                    sprintf(
+                        buffer_error_rtn,
+                        "Wrong String Format Data in Operand '%s' : End-of-String character is missing",
+                        current_line->operand_txt
+                    );
                     return;
                 }
 
@@ -304,11 +450,18 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
             {
                 if(nb_nibble == 1)
                 {
-                    sprintf(buffer_error_rtn,"Wrong Data String format in Operand '%s'",current_line->operand_txt);
+                    sprintf(
+                        buffer_error_rtn,
+                        "Wrong Data String format in Operand '%s'",
+                        current_line->operand_txt
+                    );
                     return;
                 }
             }
-            else if((current_line->operand_txt[i] >= '0' && current_line->operand_txt[i] <= '9') || (toupper(current_line->operand_txt[i]) >= 'A' && toupper(current_line->operand_txt[i]) <= 'F'))
+            else if(
+                (current_line->operand_txt[i] >= '0' && current_line->operand_txt[i] <= '9') ||
+                (toupper(current_line->operand_txt[i]) >= 'A' && toupper(current_line->operand_txt[i]) <= 'F')
+            )
             {
                 nb_nibble++;
                 if(nb_nibble == 2)
@@ -320,7 +473,11 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
         }
         if(nb_nibble == 1)
         {
-            sprintf(buffer_error_rtn,"Wrong Data String format in Operand '%s'",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Wrong Data String format in Operand '%s'",
+                current_line->operand_txt
+            );
             return;
         }
 
@@ -329,29 +486,48 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
         {
             if(nb_byte > 255)
             {
-                sprintf(buffer_error_rtn,"STR String is too long in Operand '%s'",current_line->operand_txt);
+                sprintf(
+                    buffer_error_rtn,
+                    "STR String is too long in Operand '%s'",
+                    current_line->operand_txt
+                );
                 return;
             }
             current_line->nb_byte = 1 + nb_byte;
         }
         else if(!my_stricmp(current_line->opcode_txt,"STRL"))
+        {
             current_line->nb_byte = 2 + nb_byte;
+        }
         else
+        {
             current_line->nb_byte = nb_byte;
+        }
     }
     else if(!my_stricmp(current_line->opcode_txt,"REV"))
     {
         /** No Hex in the chain **/
         /* Start of zone */
-        if(current_line->operand_txt[0] != '\'' && current_line->operand_txt[0] != '"')
+        if(
+            current_line->operand_txt[0] != '\'' &&
+            current_line->operand_txt[0] != '"'
+        )
         {
-            sprintf(buffer_error_rtn,"Wrong Data String format in Operand '%s'",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Wrong Data String format in Operand '%s'",
+                current_line->operand_txt
+            );
             return;
         }
         /* End of zone */
         if(current_line->operand_txt[strlen(current_line->operand_txt)-1] != current_line->operand_txt[0])
         {
-            sprintf(buffer_error_rtn,"Wrong Data String format in Operand '%s'",current_line->operand_txt);
+            sprintf(
+                buffer_error_rtn,
+                "Wrong Data String format in Operand '%s'",
+                current_line->operand_txt
+            );
             return;
         }
 
@@ -366,9 +542,16 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
     else
     {
         /* Data Unknown */
-        sprintf(param->buffer_error,"Impossible to decode Data mode for instruction '%s  %s' (line %d, file '%s')",
-                current_line->opcode_txt,current_line->operand_txt,current_line->file_line_number,current_line->file->file_name);
+        sprintf(
+            param->buffer_error,
+            "Impossible to decode Data mode for instruction '%s  %s' (line %d, file '%s')",
+            current_line->opcode_txt,
+            current_line->operand_txt,
+            current_line->file_line_number,
+            current_line->file->file_name
+        );
         my_RaiseError(ERROR_RAISE,param->buffer_error);
+        return;
     }
 }
 
@@ -378,10 +561,22 @@ static void BuildOneDataLineSize(struct source_line *current_line, char *buffer_
 /***************************************************************************************/
 static void BuildOneDataLineOperand(struct source_line *current_line, char *buffer_error_rtn, struct omf_segment *current_omfsegment)
 {
-    BYTE one_byte = 0, byte_count = 0, bit_shift = 0;
-    WORD one_word = 0, offset_patch = 0, offset_reference = 0;
-    DWORD one_dword = 0, address_long = 0;
-    int nb_element = 0, nb_byte = 0, nb_nibble = 0, length = 0, value = 0, is_reloc = 0, operand_size = 0, line_address = 0;
+    BYTE one_byte = 0;
+    BYTE byte_count = 0;
+    BYTE bit_shift = 0;
+    WORD one_word = 0;
+    WORD offset_patch = 0;
+    WORD offset_reference = 0;
+    DWORD one_dword = 0;
+    DWORD address_long = 0;
+    int nb_element = 0;
+    int nb_byte = 0;
+    int nb_nibble = 0;
+    int length = 0;
+    int value = 0;
+    int is_reloc = 0;
+    int operand_size = 0;
+    int line_address = 0;
     struct relocate_address *current_address_1 = NULL;
     struct relocate_address *current_address_2 = NULL;
     struct external *current_external = NULL;
@@ -389,6 +584,7 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
     char **tab_element = NULL;
     unsigned char data[5];
     char buffer_error[1024];
+
     struct parameter *param;
     my_Memory(MEMORY_GET_PARAM,&param,NULL,NULL);
 
@@ -396,19 +592,40 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
     strcpy(buffer_error_rtn,"");
 
     /*** We will recognize the different types of Data ***/
-    if(!my_stricmp(current_line->opcode_txt,"DA") || !my_stricmp(current_line->opcode_txt,"DW") || !my_stricmp(current_line->opcode_txt,"DDB") ||
-       !my_stricmp(current_line->opcode_txt,"DFB") || !my_stricmp(current_line->opcode_txt,"DB") ||
-       !my_stricmp(current_line->opcode_txt,"ADR") || !my_stricmp(current_line->opcode_txt,"ADRL"))
+    if(
+        !my_stricmp(current_line->opcode_txt,"DA") ||
+        !my_stricmp(current_line->opcode_txt,"DW") ||
+        !my_stricmp(current_line->opcode_txt,"DDB") ||
+        !my_stricmp(current_line->opcode_txt,"DFB") ||
+        !my_stricmp(current_line->opcode_txt,"DB") ||
+        !my_stricmp(current_line->opcode_txt,"ADR") ||
+        !my_stricmp(current_line->opcode_txt,"ADRL")
+    )
     {
         /** Size of the Operand **/
-        if(!my_stricmp(current_line->opcode_txt,"DFB") || !my_stricmp(current_line->opcode_txt,"DB"))
+        if(
+            !my_stricmp(current_line->opcode_txt,"DFB") ||
+            !my_stricmp(current_line->opcode_txt,"DB")
+        )
+        {
             operand_size = 1;
-        else if(!my_stricmp(current_line->opcode_txt,"DA") || !my_stricmp(current_line->opcode_txt,"DW") || !my_stricmp(current_line->opcode_txt,"DDB"))
+        }
+        else if(
+            !my_stricmp(current_line->opcode_txt,"DA") ||
+            !my_stricmp(current_line->opcode_txt,"DW") ||
+            !my_stricmp(current_line->opcode_txt,"DDB")
+        )
+        {
             operand_size = 2;
+        }
         else if(!my_stricmp(current_line->opcode_txt,"ADR"))
+        {
             operand_size = 3;
+        }
         else if(!my_stricmp(current_line->opcode_txt,"ADRL"))
+        {
             operand_size = 4;
+        }
 
         /* Cut into individual elements */
         tab_element = DecodeOperandeAsElementTable(current_line->operand_txt,&nb_element,SEPARATOR_DATA_VALUES,current_line);
@@ -426,19 +643,42 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
             else
             {
                 /** Conversion to number **/
-                one_dword = (DWORD) EvalExpressionAsInteger(tab_element[i],buffer_error,current_line,operand_size,&is_reloc,&byte_count,&bit_shift,&offset_reference,&address_long,&current_external,current_omfsegment);
+                one_dword =
+                    (DWORD)EvalExpressionAsInteger(
+                        tab_element[i],
+                        buffer_error,
+                        current_line,
+                        operand_size,
+                        &is_reloc,
+                        &byte_count,
+                        &bit_shift,
+                        &offset_reference,
+                        &address_long,
+                        &current_external,
+                        current_omfsegment
+                );
                 if(strlen(buffer_error) > 0)
                 {
-                    sprintf(buffer_error_rtn,"Impossible to evaluate %s Data '%s' (%s)",current_line->opcode_txt,tab_element[i],buffer_error);
+                    sprintf(
+                        buffer_error_rtn,
+                        "Impossible to evaluate %s Data '%s' (%s)",
+                        current_line->opcode_txt,
+                        tab_element[i],
+                        buffer_error
+                    );
                     mem_free_table(nb_element,tab_element);
                     return;
                 }
                 
                 /* Address of the line takes into account [ORG $ Addr ORG] */
                 if(current_line->is_fix_address == 1 && current_line->address != current_line->global_address)
+                {
                     line_address = current_line->global_address;
+                }
                 else
+                {
                     line_address = current_line->address;
+                }
                 
                 /** Cutting in Byte (copy respecting the Byte Order) **/
                 bo_memcpy(&data[0],&one_dword,sizeof(DWORD));
