@@ -97,43 +97,51 @@ void my_RaiseError(int code, void *data)
 void my_File(int code, void *data)
 {
     int i;
+    // JASNOTE: Here, and throughout, there's a hard-coded 256 that needs to die.
     static long hFile_tab[256];
 
     switch(code)
     {
         case FILE_INIT :
+            printf("my_FILE(INIT)\n");
             for(i=0; i<256; i++)
+            {
                 hFile_tab[i] = 0;
+            }
             break;
 
         case FILE_FREE :
             /* Closing the Directory */
             for(i=0; i<256; i++)
-                if(hFile_tab[i] != 0)
+            {
+                if (hFile_tab[i] != 0)
                 {
 #if defined(WIN32) || defined(WIN64)        
                     _findclose(hFile_tab[i]);
 #endif
                     hFile_tab[i] = 0;
                 }
+            }
             break;
 
         case FILE_DECLARE_DIRECTORY :
             for(i=0; i<256; i++)
-                if(hFile_tab[i] == 0)
-                {
-                    hFile_tab[i] = *((long *) data);
+            {
+                if (hFile_tab[i] == 0) {
+                    hFile_tab[i] = *((long*)data);
                     break;
                 }
+            }
             break;
 
         case FILE_FREE_DIRECTORY :
             for(i=0; i<256; i++)
-                if(hFile_tab[i] == *((long *) data))
-                {
+            {
+                if (hFile_tab[i] == *((long*)data)) {
                     hFile_tab[i] = 0;
                     break;
                 }
+            }
             break;
 
         default :
@@ -189,6 +197,7 @@ void my_Memory(int code, void *data, void *value, struct omf_segment *current_om
     switch(code)
     {
         case MEMORY_INIT :
+            printf("my_Memory(INIT)\n");
             param = NULL;
             current_omfsegment = NULL;
             break;

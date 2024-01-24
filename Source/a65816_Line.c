@@ -127,9 +127,19 @@ static void AddDateLine(struct source_line *);
 /****************************************************/
 /*  DecodeLineType() :  Determine the type of line. */
 /****************************************************/
-int DecodeLineType(struct source_line *first_line, struct macro *current_macro, struct omf_segment *current_omfsegment, struct omf_project *current_omfproject)
+int DecodeLineType(
+    struct source_line *first_line,
+    struct macro *current_macro,
+    struct omf_segment *current_omfsegment,
+    struct omf_project *current_omfproject
+)
 {
-    int nb_error = 0, nb_label = 0, do_level = 0, do_status = 0, nb_global = 0, found = 0;
+    int nb_error = 0;
+    int nb_label = 0;
+    int do_level = 0;
+    int do_status = 0;
+    int nb_global = 0;
+    int found = 0;
     int64_t value_wdc = 0;
     char *str_temp = NULL;
     char *new_label = NULL;
@@ -139,13 +149,13 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
     struct source_line *current_line = NULL;
     struct source_line *new_line = NULL;
     struct source_line *last_line = NULL;
-    struct source_line *do_line = NULL;
     struct source_line *else_line = NULL;
     struct source_line *fin_line = NULL;
     char *new_opcode = NULL;
     struct global *current_global = NULL;
     char opcode[1024];
     char macro_name[1024];
+
     struct parameter *param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
@@ -319,16 +329,29 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
         {
             /*** Macro (Macro detection is set before Opcodes detection because a macro WAIT could be interpreted as a 65c816 WAI) ***/
             /* Call via PMC or >>> */
-            if((!my_stricmp(current_line->opcode_txt,"PMC") || !my_stricmp(current_line->opcode_txt,">>>")) && strlen(current_line->operand_txt) > 0)
+            if((!my_stricmp(current_line->opcode_txt,"PMC") ||
+                !my_stricmp(current_line->opcode_txt,">>>")
+                ) &&
+                strlen(current_line->operand_txt) > 0
+            )
             {
                 /* We will isolate the name of the macro (because it can be pasted to the parameters) */
                 strcpy(macro_name,current_line->operand_txt);
                 for(int i=0; i<(int)strlen(macro_name); i++)
-                    if(macro_name[i] == ',' || macro_name[i] == '.' || macro_name[i] == '/' || macro_name[i] == '-' || macro_name[i] == '(' || macro_name[i] == ' ')
+                {
+                    if (
+                        macro_name[i] == ',' ||
+                        macro_name[i] == '.' ||
+                        macro_name[i] == '/' ||
+                        macro_name[i] == '-' ||
+                        macro_name[i] == '(' ||
+                        macro_name[i] == ' '
+                    )
                     {
                         macro_name[i] = '\0';
                         break;
                     }
+                }
 
                 /* Search this Macro */
                 my_Memory(MEMORY_SEARCH_MACRO,macro_name,&current_item,current_omfsegment);
@@ -460,6 +483,7 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
                     {
                         sprintf(param->buffer_error,"Impossible to allocate memory to Duplicate Line %d in Source file '%s'",current_line->file_line_number,current_line->file->file_path);
                         my_RaiseError(ERROR_RAISE,param->buffer_error);
+                        return(1);
                     }
                     new_opcode = strdup("ENT");
                     if(new_opcode == NULL)
@@ -467,6 +491,7 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
                         mem_free_sourceline(new_line);
                         sprintf(param->buffer_error,"Impossible to allocate memory to Duplicate Line %d in Source file '%s'",current_line->file_line_number,current_line->file->file_path);
                         my_RaiseError(ERROR_RAISE,param->buffer_error);
+                        return(1);
                     }
 
                     /* Change values */
@@ -495,6 +520,7 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
                 {
                     sprintf(param->buffer_error,"Impossible to allocate memory to Duplicate Line %d in Source file '%s'",current_global->source_line->file_line_number,current_global->source_line->file->file_path);
                     my_RaiseError(ERROR_RAISE,param->buffer_error);
+                    return(1);
                 }
                 new_label = strdup(current_global->name);
                 if(new_label == NULL)
@@ -502,6 +528,7 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
                     mem_free_sourceline(new_line);
                     sprintf(param->buffer_error,"Impossible to allocate memory to Duplicate Line %d in Source file '%s'",current_global->source_line->file_line_number,current_global->source_line->file->file_path);
                     my_RaiseError(ERROR_RAISE,param->buffer_error);
+                    return(1);
                 }
 
                 /* Change values */
@@ -575,7 +602,7 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
         /*************************************************************************************/
         /*** 2nd pass to evaluate the conditions DO and invalidate the lines of the source ***/
         /*************************************************************************************/
-        for(do_line=first_line; do_line; do_line=do_line->next)
+        for(struct source_line* do_line=first_line; do_line; do_line=do_line->next)
         {
             /* Line defining a first condition DO */
             if(do_line->type == LINE_DIRECTIVE && !my_stricmp(do_line->opcode_txt,"DO"))
@@ -585,27 +612,48 @@ int DecodeLineType(struct source_line *first_line, struct macro *current_macro, 
 
                 /* Look for FIN line */
                 for(fin_line=do_line; fin_line; fin_line=fin_line->next)
-                    if(fin_line->type == LINE_DIRECTIVE && !my_stricmp(fin_line->opcode_txt,"FIN") && do_line->do_level == fin_line->do_level)
+                {
+                    if (fin_line->type == LINE_DIRECTIVE &&
+                        !my_stricmp(fin_line->opcode_txt, "FIN") &&
+                        do_line->do_level == fin_line->do_level)
+                    {
                         break;
+                    }
+                }
 
                 /* Look for a possible ELSE line */
                 for(else_line=do_line; else_line!=fin_line; else_line=else_line->next)
-                    if(else_line->type == LINE_DIRECTIVE && !my_stricmp(else_line->opcode_txt,"ELSE") && do_line->do_level == else_line->do_level)
+                {
+                    if (else_line->type == LINE_DIRECTIVE &&
+                        !my_stricmp(else_line->opcode_txt, "ELSE") &&
+                        do_line->do_level == else_line->do_level)
+                    {
                         break;
+                    }
+                }
                 if(else_line == fin_line)
+                {
                     else_line = NULL;
+                }
                 
                 /** On invalid DO - ELSE / FIN **/
                 if(do_status == STATUS_DONT)
                 {
-                    for(current_line=do_line->next; current_line!=((else_line!=NULL)?else_line:fin_line); current_line=current_line->next)
+                    for(current_line=do_line->next;
+                        // JASNOTE: What in the actual fuck is this sophistry?!
+                        current_line!=((else_line!=NULL)?else_line:fin_line);
+                        current_line=current_line->next)
+                    {
                         current_line->is_valid = 0;
+                    }
                 }
                 /** On invalid ELSE / FIN **/
                 else if(do_status == STATUS_DO && else_line != NULL)
                 {
                     for(current_line=else_line->next; current_line!=fin_line; current_line=current_line->next)
+                    {
                         current_line->is_valid = 0;
+                    }
                 }
                 
                 /** We do not know: We're still part of FIN **/

@@ -32,7 +32,11 @@ void FailWithUsage(char *,char *);
 int main(int argc, char *argv[])
 {
     jmp_buf context;
-    int i, verbose_mode, symbol_mode, context_value, error;
+    int i;
+    int verbose_mode;
+    int symbol_mode;
+    int context_value;
+    int error;
     char *error_string = NULL;
     struct omf_segment *current_omfsegment;
     struct parameter *param;
@@ -46,6 +50,9 @@ int main(int argc, char *argv[])
 
     /* Analyze command line arguments */
     ParseArguments(argc, argv, &verbose_mode, &symbol_mode, macro_folder_path, source_file_path);
+
+    printf("macro_folder_path: %s\n", macro_folder_path);
+    printf("source_file_path: %s\n", source_file_path);
 
     /* Initialization */
     my_Memory(MEMORY_INIT,NULL,NULL,NULL);
@@ -75,8 +82,12 @@ int main(int argc, char *argv[])
             strcpy(file_error_path,"error_output.txt");
             my_Memory(MEMORY_GET_PARAM,&param,NULL,NULL);
             if(param != NULL)
-            if(strlen(param->current_folder_path) > 0)
-            sprintf(file_error_path,"%serror_output.txt",param->current_folder_path);
+            {
+                if (strlen(param->current_folder_path) > 0)
+                {
+                    sprintf(file_error_path, "%serror_output.txt", param->current_folder_path);
+                }
+            }
             CreateOutputFile(file_error_path, 0, 0, current_omfsegment, NULL);
         }
         
@@ -84,7 +95,7 @@ int main(int argc, char *argv[])
         my_Memory(MEMORY_FREE,NULL,NULL,NULL);
 
         /* Error */
-        return(1);
+        return(EXIT_FAILURE);
     }
 
     my_RaiseError(ERROR_INIT,&context);
@@ -92,25 +103,36 @@ int main(int argc, char *argv[])
     /* Memory allocation of the param structure */
     param = mem_alloc_param();
     if(param == NULL)
-    my_RaiseError(ERROR_RAISE,"Impossible to allocate memory for structure parameter");
+    {
+        my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure parameter");
+        return(EXIT_FAILURE);
+    }
+
     my_Memory(MEMORY_SET_PARAM,param,NULL,NULL);
 
     /** Preparing the Macro folder **/
     len = strlen(macro_folder_path);
     if(len > 0)
-    if(macro_folder_path[len-1] != '\\' && macro_folder_path[len-1] != '/')
-    strcat(macro_folder_path,FOLDER_SEPARATOR);
+    {
+        if (macro_folder_path[len - 1] != '\\' && macro_folder_path[len - 1] != '/')
+        {
+            strcat(macro_folder_path, FOLDER_SEPARATOR);
+        }
+    }
 
     /** Prepare the output files path **/
     strcpy(param->output_file_path,source_file_path);
     for(i=(int)strlen(param->output_file_path); i>=0; i--)
-    if(param->output_file_path[i] == '\\' || param->output_file_path[i] == '/')
     {
-        param->output_file_path[i+1] = '\0';
-        break;
+        if (param->output_file_path[i] == '\\' || param->output_file_path[i] == '/') {
+            param->output_file_path[i + 1] = '\0';
+            break;
+        }
     }
     if(i < 0)
-    strcpy(param->output_file_path,"");
+    {
+        strcpy(param->output_file_path, "");
+    }
     strcpy(param->current_folder_path,param->output_file_path);
 
     /*** Assemble and Link all project files ***/
@@ -124,7 +146,8 @@ int main(int argc, char *argv[])
     my_RaiseError(ERROR_END,NULL);
 
 
-    if (error) {
+    if (error)
+    {
       return EXIT_FAILURE;
     }
     /* OK */

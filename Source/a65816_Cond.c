@@ -180,6 +180,7 @@ int ProcessConditionalDirective(struct omf_segment *current_omfsegment)
                     /* Error: We start a news while the previous one is not finished */
                     sprintf(param->buffer_error,"Impossible to locate end of Lup '--^', line %d from file '%s'",begin_line->file_line_number,begin_line->file->file_name);
                     my_RaiseError(ERROR_RAISE,param->buffer_error);
+                    return(1);
                 }
 
             /* Nothing found ? */
@@ -187,6 +188,7 @@ int ProcessConditionalDirective(struct omf_segment *current_omfsegment)
             {
                 sprintf(param->buffer_error,"Impossible to locate end of Lup '--^', line %d from file '%s'",begin_line->file_line_number,begin_line->file->file_name);
                 my_RaiseError(ERROR_RAISE,param->buffer_error);
+                return(1);
             }
 
             /** Marks Lup lines as invalid (except those in Code Macros) **/

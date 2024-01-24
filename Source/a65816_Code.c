@@ -2742,7 +2742,7 @@ static int GetOperandNbByte(
     int nb_max_byte = 0;
     int nb_byte = 0;
     int bit_mode = 0;
-    int value_format = 0;
+    //int value_format = 0;
     int has_extra_hash = 0;
     int has_long_addr = 0;
     int is_block_copy = 0;
@@ -2824,6 +2824,7 @@ static int GetOperandNbByte(
             while(tab_element[i][has_extra_hash] == '#')
                 has_extra_hash++;
             
+#if 0
             /** Decimal **/
             if(IsDecimal(&tab_element[i][has_extra_hash],&nb_byte))
             {
@@ -2866,7 +2867,7 @@ static int GetOperandNbByte(
                 mem_free_table(nb_element,tab_element);
                 return(0);
             }
-            
+#endif
             /** Max Bytes to Update for Expression **/
             nb_max_byte = (nb_max_byte < nb_byte) ? nb_byte : nb_max_byte;
         }

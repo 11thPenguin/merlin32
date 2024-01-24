@@ -53,7 +53,12 @@ int LoadAllSourceFile(char *first_file_path, char *macro_folder_path, struct omf
     /** Loading of all Files Source: We only look in the 1st File **/
     for(current_line = first_file->first_line; current_line; )
     {
-        if((!my_stricmp(current_line->opcode_txt,"PUT") || !my_stricmp(current_line->opcode_txt,"PUTBIN") || !my_stricmp(current_line->opcode_txt,"USE")) && strlen(current_line->operand_txt) > 0)
+        if(
+            (
+                !my_stricmp(current_line->opcode_txt,"PUT") ||
+                !my_stricmp(current_line->opcode_txt,"PUTBIN") ||
+                !my_stricmp(current_line->opcode_txt,"USE")
+            ) && strlen(current_line->operand_txt) > 0)
         {
             /* If the inclusion is done by a Use on check if we are dealing with a File of Macro */
             if(!my_stricmp(current_line->opcode_txt,"USE") && IsMacroFile(current_line->operand_txt,param->source_folder_path,macro_folder_path))
@@ -159,13 +164,18 @@ struct source_file *LoadOneSourceFile(char *file_path, char *file_name, int file
     unsigned char *file_data = NULL;
     char *begin_line = NULL;
     char *end_line = NULL;
+
     struct parameter *param;
     my_Memory(MEMORY_GET_PARAM,&param,NULL,NULL);
+
+    printf("LoadOneSourceFile(%s, %s, %d)\n", file_path, file_name, file_number);
 
     /* Loading the File */
     file_data = LoadTextFileData(file_path,&file_size);
     if(file_data == NULL)
+    {
         return(NULL);
+    }
 
     /* Allocate memory */
     current_file = (struct source_file *) calloc(1,sizeof(struct source_file));
@@ -180,51 +190,82 @@ struct source_file *LoadOneSourceFile(char *file_path, char *file_name, int file
 
     /* File Path */
     current_file->file_path = strdup(file_path);
+    if (current_file->file_path == NULL)
+    {
+        // JASNOTE: LEAK
+        mem_free_sourcefile(current_file, 0);
+        return(NULL);
+    }
 
     /* Build file name */
     current_file->file_name = strdup(file_name);
+    if (current_file->file_name == NULL) 
+    {
+        // JASNOTE: LEAK
+        mem_free_sourcefile(current_file, 0);
+        return(NULL);
+    }
+
     
     /* File number */
     current_file->file_number = file_number;
 
-    /* Count the number of rows */
+    /* Count the number of lines */
     for(int i = 0; i < (int)file_size; i++)
     {
         if(current_file->data[i] == 0x0A)
+        {
             nb_line++;
+        }
     }
 
-    /* Allocate memory for table of ligne */
+    /* Allocate memory for table of lines */
+    printf("Based on 0x0A, this file has %d lines!\n", nb_line);
+    // JASNOTE: So...the problem is that the first line of the test file (link.s) is blank (here, \0x0D\0x0A)
+    // so in release--with no padding--we end up writing a \0x00 into memory we don't own.
+    //
+    // There's an additional problem I've not yet figured that...maybe the size of the file matters
+    // (i.e. where it gets allocated in memory relative to other stuffs?)
+    //
+    // But 100% reproducable: if the first line of xmas/links.s is "", crashes in release,
+    // if it's anything else, all good.
     current_file->tab_line = (char **) calloc(nb_line,sizeof(char *));
-
     /* Verification of memory allocations */
-    if(current_file->file_path == NULL || current_file->file_name == NULL || current_file->tab_line == NULL)
+    if(current_file->tab_line == NULL)
     {
+        // JASNOTE: LEAK
         mem_free_sourcefile(current_file,0);
         return(NULL);
     }
 
     /** Determine the beginning of each line **/
-    begin_line = (char *) current_file->data;
     int line = 0;
-    for(; begin_line; line++)
+    begin_line = (char *) current_file->data;
+    while (NULL != begin_line)
     {
+        /* End of line */
+        end_line = strchr(begin_line, 0x0A);
+
         /* Keep a pointer to the beginning of line */
+        // JASNOTE: VS2022 has been warning me about this for 2 days.
+        // This is absolutely the f256 bug problem.
         current_file->tab_line[line] = begin_line;
 
-        /* End of line */
-        end_line = strchr(begin_line,0x0A);
         if(end_line != NULL)
         {
             begin_line = end_line+1;
             if( *(end_line-1) == 0x0D )
+            {
                 --end_line;
+            }
             *end_line = '\0';
         }
         else
         {
             begin_line = NULL;
         }
+
+        line++;
     }
     current_file->nb_line = line;
 
@@ -238,6 +279,7 @@ struct source_file *LoadOneSourceFile(char *file_path, char *file_name, int file
             mem_free_sourcefile(current_file,0);
             sprintf(param->buffer_error,"Impossible to build source line %d",i);
             my_RaiseError(ERROR_RAISE,param->buffer_error);
+            return;
         }
 
         /* If we come across an END, stop */
@@ -249,13 +291,19 @@ struct source_file *LoadOneSourceFile(char *file_path, char *file_name, int file
 
         /* We'll find the Lines already using an ozunid_ label */
         if(!my_strnicmp(current_line->label_txt,"ozunid_",strlen("ozunid_")))
+        {
             ProcessOZUNIDLine(current_line->label_txt);
+        }
 
         /* Attachment to the list */
         if(current_file->first_line == NULL)
+        {
             current_file->first_line = current_line;
+        }
         else
+        {
             current_file->last_line->next = current_line;
+        }
         current_file->last_line = current_line;
     }
 
@@ -288,7 +336,9 @@ struct source_file *LoadOneBinaryFile(char *file_path, char *file_name, int file
     /** Text conversion with HEX byte, byte... **/
     nb_line = (int)file_bin_size / 16;
     if(nb_line*16 != (int)file_bin_size)
+    {
         nb_line++;                      /* The Last line will not have 16 bytes of Data */
+    }
     file_size = nb_line*((int)strlen(" HEX  \n")) + file_bin_size*3 + 1;    /* 0A, */
 
     /* Allocate memory */
@@ -347,10 +397,21 @@ struct source_file *LoadOneBinaryFile(char *file_path, char *file_name, int file
 
     /* File Path */
     current_file->file_path = strdup(file_path);
+    if (current_file->file_path == NULL)
+    {
+        mem_free_sourcefile(current_file, 0);
+        return(NULL);
+    }
 
     /* Build file name */
     current_file->file_name = strdup(file_name);
-    
+    if (current_file->file_name == NULL)
+    {
+        // JASNOTE: Also need to not leak ->file_path here?
+        mem_free_sourcefile(current_file, 0);
+        return(NULL);
+    }
+
     /* File number */
     current_file->file_number = file_number;
 
@@ -359,15 +420,16 @@ struct source_file *LoadOneBinaryFile(char *file_path, char *file_name, int file
     for(int i = 0; i < (int)file_size; i++)
     {
         if(current_file->data[i] == 0X0A)
+        {
             nb_line++;
+        }
     }
 
     /* Allocate memory for table of ligne */
     current_file->tab_line = (char **) calloc(nb_line,sizeof(char *));
-
-    /* Verification of memory allocations */
-    if(current_file->file_path == NULL || current_file->file_name == NULL || current_file->tab_line == NULL)
+    if(current_file->tab_line == NULL)
     {
+        // JASNOTE: Again, don't leak ->file_path or ->file_name?
         mem_free_sourcefile(current_file,0);
         return(NULL);
     }
@@ -386,7 +448,9 @@ struct source_file *LoadOneBinaryFile(char *file_path, char *file_name, int file
         {
             begin_line = end_line+1;
             if( *(end_line-1) == 0x0D )
+            {
                 --end_line;
+            }
             *end_line = '\0';
         }
         else
@@ -947,22 +1011,40 @@ void mem_free_sourcefile(struct source_file *current_sourcefile, int free_line)
     struct source_line *current_line;
     struct source_line *next_line;
 
+    printf("mem_free_sourcefile(%016x, %d)\n", (long)current_sourcefile, free_line);
+
     if(current_sourcefile)
     {
+        printf("mem_free_sourcefile(%s, %s, %d)\n",
+            current_sourcefile->file_path, current_sourcefile->file_name, current_sourcefile->file_number);
+
         if(current_sourcefile->file_path)
+        {
+            printf("current_sourcefile->file_path(%016x)\n", (long)current_sourcefile->file_path);
             free(current_sourcefile->file_path);
+        }
 
         if(current_sourcefile->file_name)
+        {
+            printf("current_sourcefile->file_name(%016x)\n", (long)current_sourcefile->file_name);
             free(current_sourcefile->file_name);
+        }
 
         if(current_sourcefile->data)
+        {
+            printf("current_sourcefile->data(%016x)\n", (long)current_sourcefile->data);
             free(current_sourcefile->data);
+        }
 
         if(current_sourcefile->tab_line)
+        {
+            printf("current_sourcefile->tab_line(%016x)\n", (long)current_sourcefile->tab_line);
             free(current_sourcefile->tab_line);
+        }
 
         if(free_line == 1)
         {
+            printf("free_line == 1, so...off we go!\n");
             for(current_line=current_sourcefile->first_line; current_line; )
             {
                 next_line = current_line->next;

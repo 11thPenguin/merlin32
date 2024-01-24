@@ -550,7 +550,15 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
                 {
                     data[1] = current_line->operand_txt[i];
                     data[2] = '\0';
-                    sscanf((char *)data,"%X",&value);
+
+                    // JASNOTE: I hate how this side-effect function works,
+                    // but need to at least verify if it did work.
+                    if (0 >= sscanf((char *)data,"%X",&value))
+                    {
+                        sprintf(buffer_error_rtn, "JAS: sscanf error\n");
+                        return;
+                    }
+
                     current_line->data[nb_byte++] = (unsigned char) value;
                     nb_nibble = 0;
                 }
@@ -641,7 +649,14 @@ static void BuildOneDataLineOperand(struct source_line *current_line, char *buff
                     /* Recovery from Byte */
                     data[1] = current_line->operand_txt[i];
                     data[2] = '\0';
-                    sscanf((char *)data,"%X",&value);
+
+                    // JASNOTE: I hate how this side-effect function works,
+                    // but need to at least verify if it did work.
+                    if (0 >= sscanf((char*)data,"%X",&value))
+                    {
+                        sprintf(buffer_error_rtn, "JAS: sscanf error\n");
+                        return;
+                    }
 
                     /* Keep the character */
                     param->buffer_string[nb_byte] = (unsigned char) value;
