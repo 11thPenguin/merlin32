@@ -1816,7 +1816,10 @@ static void BuildOneCodeLineOperand(
     current_line->external_address = NULL;
 
     /**  Relocatable Address  **/
-    if ((is_reloc_1 == 1 || is_reloc_2 == 1) && current_line->address_mode != AM_PC_RELATIVE && current_line->address_mode != AM_PC_RELATIVE_LONG) {
+    if ((is_reloc_1 == 1 || is_reloc_2 == 1) &&
+        current_line->address_mode != AM_PC_RELATIVE &&
+        current_line->address_mode != AM_PC_RELATIVE_LONG
+        ) {
         /* The address of the operand is relocatable */
         current_line->address_is_rel = 1;
 
@@ -1831,7 +1834,14 @@ static void BuildOneCodeLineOperand(
 
             /* For MVN / MVP, the first address is +1 or +2 */
             OffsetPatch_1 = (WORD)(line_address + 1 + ((is_mvp_mvn == 1) ? 1 : 0));
-            current_address_1 = BuildRelocateAddress(ByteCnt_1, BitShiftCnt_1, OffsetPatch_1, OffsetReference_1, current_external_1, current_omfsegment);
+            current_address_1 = BuildRelocateAddress(
+                ByteCnt_1,
+                BitShiftCnt_1,
+                OffsetPatch_1,
+                OffsetReference_1,
+                current_external_1,
+                current_omfsegment
+            );
             current_address_1->object_line = &current_line->operand_byte[0 + ((is_mvp_mvn == 1) ? 1 : 0)];
 
             /* We will keep a pointer to the address (do not switch to direct page addressing for EXT) */
@@ -1849,7 +1859,14 @@ static void BuildOneCodeLineOperand(
 
             /* A second address to relocate : MVN or MVP */
             OffsetPatch_2 = (WORD)(line_address + 1);
-            current_address_2 = BuildRelocateAddress(ByteCnt_2, BitShiftCnt_2, OffsetPatch_2, OffsetReference_2, current_external_2, current_omfsegment);
+            current_address_2 = BuildRelocateAddress(
+                ByteCnt_2,
+                BitShiftCnt_2,
+                OffsetPatch_2,
+                OffsetReference_2,
+                current_external_2,
+                current_omfsegment
+            );
             current_address_2->object_line = &current_line->operand_byte[0];
         }
 
@@ -1966,7 +1983,14 @@ static int DecodeAddressMode(struct source_line* current_line, char* error_buffe
         /* NOTE: below, the ,y is no longer present! */
 
         /** (@,S),Y : STACK_RELATIVE_INDIRECT_INDEXED_Y **/
-        if (opLen > 4 && operand[0] == '(' && operand[opLen - 3] == ',' && toupper(operand[opLen - 2]) == 'S' && operand[opLen - 1] == ')') {
+        if (
+            opLen > 4 &&
+            operand[0] == '(' &&
+            operand[opLen - 3] == ',' &&
+            toupper(operand[opLen - 2]) == 'S' &&
+            operand[opLen - 1] == ')'
+            ) {
+
             /* Delete (,S) */
             opLen -= 4;
             operand += 1;
@@ -2407,8 +2431,8 @@ int CompactDirectPageCode(struct omf_segment* current_omfsegment) {
 
     /*** Process all lines to create the binary code of the Operand ***/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
-        /* This line is invalid */
         if (current_line->is_valid == 0 || current_line->is_dum == 1 || current_line->type != LINE_CODE) {
+            /* This line is invalid */
             continue;
         }
         if (current_line->no_direct_page == 1) {
@@ -2417,19 +2441,19 @@ int CompactDirectPageCode(struct omf_segment* current_omfsegment) {
         if (!IsPageDirectOpcode(current_line->opcode_txt)) {
             continue;
         }
-        if (current_line->address_is_rel == 1)    /* The address is relocatable (OMF) */
-        {
+        if (current_line->address_is_rel == 1) {
+            /* The address is relocatable (OMF) */
             continue;
         }
-        if (current_line->nb_byte != 3)   /* Operand Size = nb_byte-1 */
-        {
+        if (current_line->nb_byte != 3) {
+            /* Operand Size = nb_byte-1 */
             continue;
         }
         if (current_line->address_mode <= AM_IMPLICIT || current_line->address_mode >= AM_ABSOLUTE_LONG) {
             continue;
         }
-        if (current_line->external_address != NULL)    /* This address is located in another Segment */
-        {
+        if (current_line->external_address != NULL) {
+            /* This address is located in another Segment */
             continue;
         }
 
