@@ -334,6 +334,8 @@ static void BuildOneDataLineSize(struct source_line* current_line, char* buffer_
                     current_line->operand_txt,
                     buffer_error
                 );
+                // JASNOTE: We continue on in an else-if chain.
+                // Why "return" here?
                 return;
             } else if (nb_byte < 0) {
                 mem_free_table(nb_element, tab_element);
@@ -343,6 +345,8 @@ static void BuildOneDataLineSize(struct source_line* current_line, char* buffer_
                     current_line->operand_txt,
                     nb_byte
                 );
+                // JASNOTE: We continue on in an else-if chain.
+                // Why "return" here?
                 return;
             } else {
                 /** Get the size of the Data Part **/
