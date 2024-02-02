@@ -3457,7 +3457,7 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
     int nb_element = 0;
     int is_error = 0;
     int nb_open = 0;
-    int has_priority = 0;
+    // JAS: int has_priority = 0;
     int is_operator = 0;
     int nb_item = 0;
     int64_t value = 0;
@@ -3699,12 +3699,12 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
     }
 
     /** Are there any {} and are they properly nested? **/
-    has_priority = 0;
+    // JAS: has_priority = 0;
     nb_open = 0;
     for (int i = 0; i < nb_element; i++)
         if (!strcmp(tab_element[i], "{")) {
             nb_open++;
-            has_priority = 1;
+            // JAS: has_priority = 1;
         } else if (!strcmp(tab_element[i], "}")) {
             nb_open--;
             if (nb_open < 0) {
@@ -3978,7 +3978,7 @@ int64_t EvalExpressionAsInteger(
     struct external** external_rtn,
     struct omf_segment* current_omfsegment
 ) {
-    int has_priority = 0;
+    // JAS: int has_priority = 0;
     int nb_open = 0;
     int is_algebric = 0;
     int64_t value = 0;
@@ -4320,12 +4320,12 @@ int64_t EvalExpressionAsInteger(
     }
 
     /** Are there any {} and are they properly nested? **/
-    has_priority = 0;
+    // JAS: has_priority = 0;
     nb_open = 0;
     for (int i = 0; i < nb_element; i++) {
         if (!strcmp(tab_element[i], "{")) {
             nb_open++;
-            has_priority = 1;
+            // JAS: has_priority = 1;
         } else if (!strcmp(tab_element[i], "}")) {
             nb_open--;
             if (nb_open < 0) {
