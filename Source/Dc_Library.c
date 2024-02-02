@@ -3700,8 +3700,10 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
 
     /** Are there any {} and are they properly nested? **/
     // JAS: has_priority = 0;
+    // JASNOTE: Look at the diff for this. This is why it's *so* dangerous to leave out the braces.
+    //    Thank goodness Clang caught this -Wmisleading-indentation error, or...boy, howdy.
     nb_open = 0;
-    for (int i = 0; i < nb_element; i++)
+    for (int i = 0; i < nb_element; i++) {
         if (!strcmp(tab_element[i], "{")) {
             nb_open++;
             // JAS: has_priority = 1;
@@ -3714,105 +3716,107 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
                 return(STATUS_UNKNWON);
             }
         }
-        if (nb_open != 0) {
-            /* Error */
-            strcpy(buffer_error, "Missing '}' in expression");
-            mem_free_table(nb_element, tab_element);
-            return(STATUS_UNKNWON);
-        }
+    }
 
-        /** We will evaluate the expression **/
-        is_operator = 0;
-        for (int i = 0; i < nb_element; i++) {
-            /** We will try to decode all types of data **/
-            if (is_operator == 0) {
-                /** We must come across a value **/
-                if (!strcmp(tab_element[i], "{"))
-                    value = EvaluateAlgebricExpression(tab_element, i, nb_element, cond_line->address, &nb_item);
-                else {
-                    /** The digital conversion has already been done **/
-                    value = my_atoi64(tab_element[i]);
-                }
-
-                /** Add this value to the global expression **/
-                if (i == 0)
-                    value_expression = value * ((first_value_is_negative == 1) ? -1 : 1);
-                else {
-                    /** Applies the operator to both values **/
-                    if (operator_c == '>')
-                        value_expression = (value_expression > value) ? 1 : 0;
-                    else if (operator_c == '=')
-                        value_expression = (value_expression == value) ? 1 : 0;
-                    else if (operator_c == '<')
-                        value_expression = (value_expression < value) ? 1 : 0;
-                    else if (operator_c == '#')
-                        value_expression = (value_expression != value) ? 1 : 0;
-                    else if (operator_c == '+')
-                        value_expression = value_expression + value;
-                    else if (operator_c == '-')
-                        value_expression = value_expression - value;
-                    else if (operator_c == '*')
-                        value_expression = value_expression * value;
-                    else if (operator_c == '/') {
-                        /* Beware of divisions by Zero */
-                        if (value == 0) {
-                            strcpy(buffer_error, "Division by Zero");
-                            mem_free_table(nb_element, tab_element);
-                            return(STATUS_UNKNWON);
-                        }
-
-                        value_expression = value_expression / value;
-                    } else if (operator_c == '!')
-                        value_expression = value_expression ^ value;
-                    else if (operator_c == '.')
-                        value_expression = value_expression | value;
-                    else if (operator_c == '&')
-                        value_expression = value_expression & value;
-                }
-
-                /* Next will be an operator */
-                is_operator = 1;
-
-                /* If we had one { we skip all the expression */
-                if (!strcmp(tab_element[i], "{"))
-                    i += nb_item;
-            } else {
-                /** We must recognize the operator **/
-                if (
-                    strcmp(tab_element[i], "<") &&
-                    strcmp(tab_element[i], "=") &&
-                    strcmp(tab_element[i], ">") &&
-                    strcmp(tab_element[i], "#") &&
-                    strcmp(tab_element[i], "+") &&
-                    strcmp(tab_element[i], "-") &&
-                    strcmp(tab_element[i], "*") &&
-                    strcmp(tab_element[i], "/") &&
-                    strcmp(tab_element[i], "!") &&
-                    strcmp(tab_element[i], ".") &&
-                    strcmp(tab_element[i], "&")
-                    ) {
-                    sprintf(buffer_error, "The '%s' is not a valid operator", tab_element[i]);
-                    mem_free_table(nb_element, tab_element);
-                    return(STATUS_UNKNWON);
-                }
-
-                /* Keep the operator for the future */
-                operator_c = tab_element[i][0];
-
-                /* Next will be a value */
-                is_operator = 0;
-            }
-        }
-
-        /* Memory release */
+    if (nb_open != 0) {
+        /* Error */
+        strcpy(buffer_error, "Missing '}' in expression");
         mem_free_table(nb_element, tab_element);
+        return(STATUS_UNKNWON);
+    }
 
-        /* Do we know the expression */
-        *value_expression_rtn = value_expression;
-        if (value_expression == 0)
-            return(STATUS_DONT);
-        else
-            return(STATUS_DO);
+    /** We will evaluate the expression **/
+    is_operator = 0;
+    for (int i = 0; i < nb_element; i++) {
+        /** We will try to decode all types of data **/
+        if (is_operator == 0) {
+            /** We must come across a value **/
+            if (!strcmp(tab_element[i], "{"))
+                value = EvaluateAlgebricExpression(tab_element, i, nb_element, cond_line->address, &nb_item);
+            else {
+                /** The digital conversion has already been done **/
+                value = my_atoi64(tab_element[i]);
+            }
+
+            /** Add this value to the global expression **/
+            if (i == 0)
+                value_expression = value * ((first_value_is_negative == 1) ? -1 : 1);
+            else {
+                /** Applies the operator to both values **/
+                if (operator_c == '>')
+                    value_expression = (value_expression > value) ? 1 : 0;
+                else if (operator_c == '=')
+                    value_expression = (value_expression == value) ? 1 : 0;
+                else if (operator_c == '<')
+                    value_expression = (value_expression < value) ? 1 : 0;
+                else if (operator_c == '#')
+                    value_expression = (value_expression != value) ? 1 : 0;
+                else if (operator_c == '+')
+                    value_expression = value_expression + value;
+                else if (operator_c == '-')
+                    value_expression = value_expression - value;
+                else if (operator_c == '*')
+                    value_expression = value_expression * value;
+                else if (operator_c == '/') {
+                    /* Beware of divisions by Zero */
+                    if (value == 0) {
+                        strcpy(buffer_error, "Division by Zero");
+                        mem_free_table(nb_element, tab_element);
+                        return(STATUS_UNKNWON);
+                    }
+
+                    value_expression = value_expression / value;
+                } else if (operator_c == '!')
+                    value_expression = value_expression ^ value;
+                else if (operator_c == '.')
+                    value_expression = value_expression | value;
+                else if (operator_c == '&')
+                    value_expression = value_expression & value;
+            }
+
+            /* Next will be an operator */
+            is_operator = 1;
+
+            /* If we had one { we skip all the expression */
+            if (!strcmp(tab_element[i], "{"))
+                i += nb_item;
+        } else {
+            /** We must recognize the operator **/
+            if (
+                strcmp(tab_element[i], "<") &&
+                strcmp(tab_element[i], "=") &&
+                strcmp(tab_element[i], ">") &&
+                strcmp(tab_element[i], "#") &&
+                strcmp(tab_element[i], "+") &&
+                strcmp(tab_element[i], "-") &&
+                strcmp(tab_element[i], "*") &&
+                strcmp(tab_element[i], "/") &&
+                strcmp(tab_element[i], "!") &&
+                strcmp(tab_element[i], ".") &&
+                strcmp(tab_element[i], "&")
+                ) {
+                sprintf(buffer_error, "The '%s' is not a valid operator", tab_element[i]);
+                mem_free_table(nb_element, tab_element);
+                return(STATUS_UNKNWON);
+            }
+
+            /* Keep the operator for the future */
+            operator_c = tab_element[i][0];
+
+            /* Next will be a value */
+            is_operator = 0;
+        }
+    }
+
+    /* Memory release */
+    mem_free_table(nb_element, tab_element);
+
+    /* Do we know the expression */
+    *value_expression_rtn = value_expression;
+    if (value_expression == 0)
+        return(STATUS_DONT);
+    else
+        return(STATUS_DO);
 }
 
 
