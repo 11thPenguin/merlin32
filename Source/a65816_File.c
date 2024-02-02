@@ -255,7 +255,7 @@ struct source_file* LoadOneSourceFile(char* file_path, char* file_name, int file
             mem_free_sourcefile(current_file, 0);
             sprintf(param->buffer_error, "Impossible to build source line %d", i);
             my_RaiseError(ERROR_RAISE, param->buffer_error);
-            return;
+            return(NULL);
         }
 
         /* If we come across an END, stop */
@@ -966,34 +966,24 @@ void mem_free_sourcefile(struct source_file* current_sourcefile, int free_line) 
     struct source_line* current_line;
     struct source_line* next_line;
 
-    printf("mem_free_sourcefile(%016x, %d)\n", (long)current_sourcefile, free_line);
-
     if (current_sourcefile) {
-        printf("mem_free_sourcefile(%s, %s, %d)\n",
-            current_sourcefile->file_path, current_sourcefile->file_name, current_sourcefile->file_number);
-
         if (current_sourcefile->file_path) {
-            printf("current_sourcefile->file_path(%016x)\n", (long)current_sourcefile->file_path);
             free(current_sourcefile->file_path);
         }
 
         if (current_sourcefile->file_name) {
-            printf("current_sourcefile->file_name(%016x)\n", (long)current_sourcefile->file_name);
             free(current_sourcefile->file_name);
         }
 
         if (current_sourcefile->data) {
-            printf("current_sourcefile->data(%016x)\n", (long)current_sourcefile->data);
             free(current_sourcefile->data);
         }
 
         if (current_sourcefile->tab_line) {
-            printf("current_sourcefile->tab_line(%016x)\n", (long)current_sourcefile->tab_line);
             free(current_sourcefile->tab_line);
         }
 
         if (free_line == 1) {
-            printf("free_line == 1, so...off we go!\n");
             for (current_line = current_sourcefile->first_line; current_line; ) {
                 next_line = current_line->next;
                 mem_free_sourceline(current_line);
