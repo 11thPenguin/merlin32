@@ -38,7 +38,9 @@ int ReplaceLupWithCode(struct omf_segment* current_omfsegment) {
     /* Recover the 1st source file */
     my_Memory(MEMORY_GET_FILE, &first_file, NULL, current_omfsegment);
     if (first_file == NULL) {
-        return(0);
+        // JASNOTE: In current usage, this return value is never checked,
+        // but in the original implementation 0 meant "OK", so we'll return 1 if "BOO".
+        return(1);
     }
 
     /*** Process all lines ***/
@@ -66,6 +68,7 @@ int ReplaceLupWithCode(struct omf_segment* current_omfsegment) {
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             }
 
             /* Calculate its new value */
@@ -92,6 +95,7 @@ int ReplaceLupWithCode(struct omf_segment* current_omfsegment) {
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             }
 
             /* Stores the value */
@@ -118,6 +122,7 @@ int ReplaceLupWithCode(struct omf_segment* current_omfsegment) {
                         begin_line->file->file_name
                     );
                     my_RaiseError(ERROR_RAISE, param->buffer_error);
+                    return(1);
                 }
             }
 
@@ -130,6 +135,7 @@ int ReplaceLupWithCode(struct omf_segment* current_omfsegment) {
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             }
 
             /** Construct the lines of codes of this Lup (we replace the labels by new ones) **/
@@ -212,6 +218,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                 buffer_error
             );
             my_RaiseError(ERROR_RAISE, param->buffer_error);
+            return(NULL);
         }
     }
 
@@ -234,6 +241,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
 
             /* Add the line */
@@ -251,13 +259,15 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     end_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
 
             /* Put the line containing the end label in second position */
-            if (first_line == NULL)
+            if (first_line == NULL) {
                 first_line = label_line;
-            else
+            } else {
                 last_line->next = label_line;
+            }
             last_line = label_line;
         }
 
@@ -302,6 +312,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
             free(first_line->label_txt);
             first_line->label_txt = new_label;
@@ -316,6 +327,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
 
             /* Put the line before all the others */
@@ -337,6 +349,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     begin_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
             free(last_line->label_txt);
             last_line->label_txt = new_label;
@@ -351,6 +364,7 @@ static struct source_line* BuildLupLine(struct source_line* begin_line, struct s
                     end_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
 
             /* Put the line after all the others */
@@ -503,19 +517,24 @@ static struct source_line* BuildSourceLupOneIterationLine(struct source_line* be
 /*  BuildSourceLupLine() :  Building a Source Line from a Lup. */
 /***************************************************************/
 static struct source_line* BuildSourceLupLine(struct source_line* current_source_line, int iter, struct omf_segment* current_omfsegment) {
-    int i, j, k, l;
+    int i;
+    int j;
+    int k;
+    int l;
     struct source_line* new_source_line = NULL;
     char new_operand_txt[1024];
     char value_txt[256];
     char variable_name[1024];
     struct variable* current_variable = NULL;
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
     /* Allocation of the new line */
     new_source_line = (struct source_line*)calloc(1, sizeof(struct source_line));
-    if (new_source_line == NULL)
+    if (new_source_line == NULL) {
         return(NULL);
+    }
 
     /** Transfer the characteristics of the line Source (number of the line ...) **/
     new_source_line->file_line_number = current_source_line->file_line_number;
@@ -545,6 +564,7 @@ static struct source_line* BuildSourceLupLine(struct source_line* current_source
             current_source_line->file->file_name
         );
         my_RaiseError(ERROR_RAISE, param->buffer_error);
+        return(NULL);
     }
 
     /** Modify the Label: @ -> ASC iter **/
@@ -561,6 +581,7 @@ static struct source_line* BuildSourceLupLine(struct source_line* current_source
                     current_source_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             } else {
                 new_source_line->label_txt[i] = (char)('A' + iter - 1);    /* A-Z */
             }
@@ -592,6 +613,7 @@ static struct source_line* BuildSourceLupLine(struct source_line* current_source
                     current_source_line->file->file_name
                 );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(NULL);
             }
 
             /* Set the value in the correct form: Variable values are limited to 32 bits */
@@ -626,6 +648,7 @@ static struct source_line* BuildSourceLupLine(struct source_line* current_source
             current_source_line->file->file_name
         );
         my_RaiseError(ERROR_RAISE, param->buffer_error);
+        return(NULL);
     }
 
     /* Return line */
