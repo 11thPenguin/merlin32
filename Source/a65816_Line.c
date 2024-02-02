@@ -2331,14 +2331,16 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
     /* Recover the 1st source file */
     my_Memory(MEMORY_GET_FILE, &first_file, NULL, current_omfsegment);
     if (first_file == NULL) {
+        // JASNOTE: ERROR?
         return(0);
     }
 
     /** Number all lines **/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
         /* Invalid lines are ignored */
-        if (current_line->is_valid == 0)
+        if (current_line->is_valid == 0) {
             continue;
+        }
 
         /* Set Line Number */
         current_line->line_number = line_number++;
@@ -2358,6 +2360,7 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
                 if (has_previous_label == 1) {
                     sprintf(param->buffer_error, "Error : The REL directive should be located at the top of the file (line %d, file '%s')", current_line->file_line_number, current_line->file->file_name);
                     my_RaiseError(ERROR_RAISE, param->buffer_error);
+                    return(1);
                 }
 
                 /* The assembly will start in $0000 */
@@ -2381,10 +2384,12 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
                 /* Never Here */
                 sprintf(param->buffer_error, "Error : The OBJ directive is not allowed with source code having already define a REL directive (line %d, file '%s')", current_line->file_line_number, current_line->file->file_name);
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             } else if (current_line->type == LINE_DIRECTIVE && !my_stricmp(current_line->opcode_txt, "ORG") && current_omfsegment->is_omf == 1) {
                 /* Never Here */
                 sprintf(param->buffer_error, "Error : The ORG directive is not allowed with source code having already define a REL directive (line %d, file '%s')", current_line->file_line_number, current_line->file->file_name);
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             } else if ((current_line->type == LINE_CODE || current_line->type == LINE_DATA || current_line->type == LINE_MACRO || current_line->type == LINE_EMPTY || current_line->type == LINE_GLOBAL) && strlen(current_line->label_txt) > 0) {
                 has_previous_label = 1;
             }
@@ -2394,18 +2399,39 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
     /*** Process all lines ***/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
         /* Invalid lines are ignored */
-        if (current_line->is_valid == 0)
+        if (current_line->is_valid == 0) {
             continue;
+        }
 
         /** Directive amending the address: ORG + DUM **/
         if (current_line->type == LINE_DIRECTIVE && !my_stricmp(current_line->opcode_txt, "ORG")) {
             /** Org $ Addr (for OMFs and SingleBinary, we have an area [ORG $ Addr - ORG] or fixed address) **/
             if (strlen(current_line->operand_txt) > 0) {
                 /* Retrieve the new address */
-                int64_t new_address_64 = EvalExpressionAsInteger(current_line->operand_txt, &buffer_error[0], current_line, 2, &is_reloc, &byte_count, &bit_shift, &offset_reference, &address_long, &current_external, current_omfsegment);
+                int64_t new_address_64 = EvalExpressionAsInteger(
+                    current_line->operand_txt,
+                    &buffer_error[0],
+                    current_line,
+                    2,
+                    &is_reloc,
+                    &byte_count,
+                    &bit_shift,
+                    &offset_reference,
+                    &address_long,
+                    &current_external,
+                    current_omfsegment
+                );
                 if (strlen(buffer_error) > 0) {
-                    sprintf(param->buffer_error, "Error : Impossible to evaluate ORG Address : '%s' (line %d, file '%s') : %s", current_line->operand_txt, current_line->file_line_number, current_line->file->file_name, buffer_error);
+                    sprintf(
+                        param->buffer_error,
+                        "Error : Impossible to evaluate ORG Address : '%s' (line %d, file '%s') : %s",
+                        current_line->operand_txt,
+                        current_line->file_line_number,
+                        current_line->file->file_name,
+                        buffer_error
+                    );
                     my_RaiseError(ERROR_RAISE, param->buffer_error);
+                    return(1);
                 }
                 /* We only keep 32 bits */
                 new_address = (int)(0xFFFFFFFF & new_address_64);
@@ -2453,10 +2479,30 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
             }
         } else if (current_line->type == LINE_DIRECTIVE && !my_stricmp(current_line->opcode_txt, "DUM")) {
             /* Retrieve the new address */
-            int64_t dum_address_64 = EvalExpressionAsInteger(current_line->operand_txt, &buffer_error[0], current_line, 2, &is_reloc, &byte_count, &bit_shift, &offset_reference, &address_long, &current_external, current_omfsegment);
+            int64_t dum_address_64 = EvalExpressionAsInteger(
+                current_line->operand_txt,
+                &buffer_error[0],
+                current_line,
+                2,
+                &is_reloc,
+                &byte_count,
+                &bit_shift,
+                &offset_reference,
+                &address_long,
+                &current_external,
+                current_omfsegment
+            );
             if (strlen(buffer_error) > 0) {
-                sprintf(param->buffer_error, "Error : Impossible to evaluate DUM Address : '%s' (line %d, file '%s') : %s", current_line->operand_txt, current_line->file_line_number, current_line->file->file_name, buffer_error);
+                sprintf(
+                    param->buffer_error,
+                    "Error : Impossible to evaluate DUM Address : '%s' (line %d, file '%s') : %s",
+                    current_line->operand_txt,
+                    current_line->file_line_number,
+                    current_line->file->file_name,
+                    buffer_error
+                );
                 my_RaiseError(ERROR_RAISE, param->buffer_error);
+                return(1);
             }
             /* We only keep 32 bits */
             dum_address = (int)(0xFFFFFFFF & dum_address_64);
@@ -2485,8 +2531,9 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
                 /* Isolate the expression indicating the length */
                 strcpy(operand, current_line->operand_txt);
                 next_sep = strchr(operand, ',');
-                if (next_sep)
+                if (next_sep) {
                     *next_sep = '\0';
+                }
 
                 /* Calculate the expression */
                 nb_byte = (int)EvalExpressionAsInteger(operand, &buffer_error[0], current_line, 3, &is_reloc, &byte_count, &bit_shift, &offset_reference, &address_long, &current_external, current_omfsegment);
@@ -2532,18 +2579,47 @@ int ComputeLineAddress(struct omf_segment* current_omfsegment, struct omf_projec
                 /* Isolate the expression indicating the length */
                 strcpy(operand, current_line->operand_txt);
                 next_sep = strchr(operand, ',');
-                if (next_sep)
+                if (next_sep) {
                     *next_sep = '\0';
+                }
 
                 /* Calculate the expression */
-                nb_byte = (int)EvalExpressionAsInteger(operand, &buffer_error[0], current_line, 3, &is_reloc, &byte_count, &bit_shift, &offset_reference, &address_long, &current_external, current_omfsegment);
+                nb_byte = (int)EvalExpressionAsInteger(
+                    operand,
+                    &buffer_error[0],
+                    current_line,
+                    3,
+                    &is_reloc,
+                    &byte_count,
+                    &bit_shift,
+                    &offset_reference,
+                    &address_long,
+                    &current_external,
+                    current_omfsegment
+                );
                 if (strlen(buffer_error) > 0) {
-                    sprintf(param->buffer_error, "Error : Impossible to evaluate DS data size : '%s' (line %d, file '%s') : %s", operand, current_line->file_line_number, current_line->file->file_name, buffer_error);
+                    sprintf(
+                        param->buffer_error,
+                        "Error : Impossible to evaluate DS data size : '%s' (line %d, file '%s') : %s",
+                        operand,
+                        current_line->file_line_number,
+                        current_line->file->file_name,
+                        buffer_error
+                    );
                     my_RaiseError(ERROR_RAISE, param->buffer_error);
+                    return(1);
                 }
                 if (nb_byte < 0) {
-                    sprintf(param->buffer_error, "Error : Evaluation of DS data size ends up as negative value (%d) : '%s' (line %d, file '%s')", nb_byte, operand, current_line->file_line_number, current_line->file->file_name);
+                    sprintf(
+                        param->buffer_error,
+                        "Error : Evaluation of DS data size ends up as negative value (%d) : '%s' (line %d, file '%s')",
+                        nb_byte,
+                        operand,
+                        current_line->file_line_number,
+                        current_line->file->file_name
+                    );
                     my_RaiseError(ERROR_RAISE, param->buffer_error);
+                    return(1);
                 }
 
                 /* We finally have the size occupied by the line */
@@ -2643,12 +2719,20 @@ int CheckForUnknownLine(struct omf_segment* current_omfsegment) {
     /** Pass all lines in to review **/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
         /* Invalid lines are ignored */
-        if (current_line->is_valid == 0)
+        if (current_line->is_valid == 0) {
             continue;
+        }
 
         /* We do not take Label in Macro */
         if (current_line->type == LINE_UNKNOWN) {
-            printf("      => [Error] Unkown line : '%s  %s  %s' in file '%s' (line %d).\n", current_line->label_txt, current_line->opcode_txt, current_line->operand_txt, current_line->file->file_name, current_line->file_line_number);
+            printf(
+                "      => [Error] Unkown line : '%s  %s  %s' in file '%s' (line %d).\n",
+                current_line->label_txt,
+                current_line->opcode_txt,
+                current_line->operand_txt,
+                current_line->file->file_name,
+                current_line->file_line_number
+            );
             nb_error++;
         }
     }
@@ -2680,7 +2764,14 @@ int CheckForDumLine(struct omf_segment* current_omfsegment) {
         if (current_line->type == LINE_DIRECTIVE && !my_stricmp(current_line->opcode_txt, "DUM")) {
             /* Check for the presence of an Operand */
             if (strlen(current_line->operand_txt) == 0) {
-                printf("      => [Error] Empty DUM line : '%s  %s  %s' in file '%s' (line %d).\n", current_line->label_txt, current_line->opcode_txt, current_line->operand_txt, current_line->file->file_name, current_line->file_line_number);
+                printf(
+                    "      => [Error] Empty DUM line : '%s  %s  %s' in file '%s' (line %d).\n",
+                    current_line->label_txt,
+                    current_line->opcode_txt,
+                    current_line->operand_txt,
+                    current_line->file->file_name,
+                    current_line->file_line_number
+                );
                 return(1);
             }
 
@@ -2703,14 +2794,28 @@ int CheckForDumLine(struct omf_segment* current_omfsegment) {
 
                 /* We should not fall back on a DUM */
                 if (current_line != dend_line && dend_line->type == LINE_DIRECTIVE && !my_stricmp(dend_line->opcode_txt, "DUM")) {
-                    printf("      => [Error] DUM line with DUM found before DEND : '%s  %s  %s' in file '%s' (line %d).\n", current_line->label_txt, current_line->opcode_txt, current_line->operand_txt, current_line->file->file_name, current_line->file_line_number);
+                    printf(
+                        "      => [Error] DUM line with DUM found before DEND : '%s  %s  %s' in file '%s' (line %d).\n",
+                        current_line->label_txt,
+                        current_line->opcode_txt,
+                        current_line->operand_txt,
+                        current_line->file->file_name,
+                        current_line->file_line_number
+                    );
                     return(1);
                 }
             }
 
             /* Past the DEND? */
             if (dend_line == NULL) {
-                printf("      => [Error] DUM line without DEND : '%s  %s  %s' in file '%s' (line %d).\n", current_line->label_txt, current_line->opcode_txt, current_line->operand_txt, current_line->file->file_name, current_line->file_line_number);
+                printf(
+                    "      => [Error] DUM line without DEND : '%s  %s  %s' in file '%s' (line %d).\n",
+                    current_line->label_txt,
+                    current_line->opcode_txt,
+                    current_line->operand_txt,
+                    current_line->file->file_name,
+                    current_line->file_line_number
+                );
                 return(1);
             }
 
