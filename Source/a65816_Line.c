@@ -388,8 +388,9 @@ int DecodeLineType(
                     current_line->type = LINE_DIRECTIVE;
 
                     /* We detect the REL (but we do not consider if we are on a multi-fixed project) */
-                    if (!my_stricmp(current_line->opcode_txt, "REL") && current_omfproject->is_multi_fixed != 1)
+                    if (!my_stricmp(current_line->opcode_txt, "REL") && current_omfproject->is_multi_fixed != 1) {
                         current_omfsegment->is_relative = 1;
+                    }
 
                     continue;
                 }
@@ -694,8 +695,9 @@ static int ProcessSourceAsteriskLine(struct source_line* first_line, struct sour
     /*** Pass all lines in to review ***/
     for (previous_line = NULL, current_line = first_line; current_line; previous_line = current_line, current_line = current_line->next) {
         /* We do not treat comments */
-        if (current_line->type == LINE_EMPTY || current_line->type == LINE_COMMENT || current_line->type == LINE_GLOBAL || current_line->is_valid == 0)
+        if (current_line->type == LINE_EMPTY || current_line->type == LINE_COMMENT || current_line->type == LINE_GLOBAL || current_line->is_valid == 0) {
             continue;
+        }
 
         /** Special case of ]Label = * or Label = * **/
         if (strlen(current_line->label_txt) > 0 && !strcmp(current_line->opcode_txt, "=") && !strcmp(current_line->operand_txt, "*")) {
@@ -711,12 +713,18 @@ static int ProcessSourceAsteriskLine(struct source_line* first_line, struct sour
             /** Detected a * used as a value? **/
             use_address = UseCurrentAddress(current_line->operand_txt, &buffer_error[0], current_line);
             if (strlen(buffer_error) > 0) {
-                printf("    Error : Impossible to analyze Operand '%s' in source file '%s' (line %d) : %s.\n",
-                    current_line->operand_txt, current_line->file->file_name, current_line->file_line_number, buffer_error);
+                printf(
+                    "    Error : Impossible to analyze Operand '%s' in source file '%s' (line %d) : %s.\n",
+                    current_line->operand_txt,
+                    current_line->file->file_name,
+                    current_line->file_line_number,
+                    buffer_error
+                );
                 return(1);
             }
-            if (use_address == 0)
+            if (use_address == 0) {
                 continue;
+            }
 
             /** We will replace the * with a unique label **/
             /* Creation of a unique ANOP label */
@@ -755,16 +763,22 @@ static int ProcessSourceAsteriskLine(struct source_line* first_line, struct sour
 
             /* Attachment of the line above */
             new_line->next = current_line;
-            if (previous_line == NULL)
+            if (previous_line == NULL) {
                 first_file->first_line = new_line;
-            else
+            } else {
                 previous_line->next = new_line;
+            }
 
             /** Replaces the * with a unique label **/
             ReplaceCurrentAddressInOperand(&current_line->operand_txt, label_name, &buffer_error[0], current_line);
             if (strlen(buffer_error) > 0) {
-                printf("    Error : Impossible to replace '*' in Operand '%s' in source file '%s' (line %d) : %s.\n",
-                    current_line->operand_txt, current_line->file->file_name, current_line->file_line_number, buffer_error);
+                printf(
+                    "    Error : Impossible to replace '*' in Operand '%s' in source file '%s' (line %d) : %s.\n",
+                    current_line->operand_txt,
+                    current_line->file->file_name,
+                    current_line->file_line_number,
+                    buffer_error
+                );
                 return(1);
             }
         }
@@ -912,11 +926,13 @@ int BuildLabelTable(struct omf_segment* current_omfsegment) {
         current_label = (struct label*)calloc(1, sizeof(struct label));
         if (current_label == NULL) {
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure label");
+            return(1);
         }
         current_label->name = strdup(current_line->label_txt);
         if (current_label->name == NULL) {
             free(current_label);
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'name' from structure label");
+            return(1);
         }
         current_label->line = current_line;
 
@@ -941,13 +957,17 @@ int BuildLabelTable(struct omf_segment* current_omfsegment) {
 /*  BuildEquivalenceTable() :  Construction of Equivalence tables. */
 /*******************************************************************/
 int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
-    int nb_equivalence = 0, nb_element = 0, modified = 0, nb_modified = 0;
+    int nb_equivalence = 0;
+    int nb_element = 0;
+    int modified = 0;
+    int nb_modified = 0;
     struct equivalence* current_equivalence = NULL;
     struct equivalence* replace_equivalence = NULL;
     struct source_line* current_line = NULL;
     struct source_file* first_file = NULL;
     char* new_value = NULL;
     char** tab_element = NULL;
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
@@ -957,26 +977,32 @@ int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
     /** Pass all lines in to review (some equivalences from macro files are already registered) **/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
         /* Invalid lines are ignored */
-        if (current_line->is_valid == 0)
+        if (current_line->is_valid == 0) {
             continue;
+        }
 
         /* We only take Equivalence */
-        if (current_line->type != LINE_EQUIVALENCE)
+        if (current_line->type != LINE_EQUIVALENCE) {
             continue;
+        }
 
         /* We only take the lines with label */
-        if (strlen(current_line->label_txt) == 0)
+        if (strlen(current_line->label_txt) == 0) {
             continue;
+        }
 
         /** Allocation of the structure for Equivalence **/
         current_equivalence = (struct equivalence*)calloc(1, sizeof(struct equivalence));
-        if (current_equivalence == NULL)
+        if (current_equivalence == NULL) {
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure equivalence");
+            return(1);
+        }
         current_equivalence->name = strdup(current_line->label_txt);
         current_equivalence->valueStr = strdup(current_line->operand_txt);
         if (current_equivalence->name == NULL || current_equivalence->valueStr == NULL) {
             mem_free_equivalence(current_equivalence);
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'name' from structure equivalence");
+            return(1);
         }
         current_equivalence->source_line = current_line;   /* Cette equivalence vient d'un Source file */
 
@@ -998,9 +1024,16 @@ int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
             my_Memory(MEMORY_GET_EQUIVALENCE, &i, &current_equivalence, current_omfsegment);
 
             /** Cut out the expression **/
-            tab_element = DecodeOperandeAsElementTable(current_equivalence->valueStr, &nb_element, SEPARATOR_REPLACE_LABEL, current_equivalence->source_line);
-            if (tab_element == NULL)
+            tab_element = DecodeOperandeAsElementTable(
+                current_equivalence->valueStr,
+                &nb_element,
+                SEPARATOR_REPLACE_LABEL,
+                current_equivalence->source_line
+            );
+            if (tab_element == NULL) {
                 my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'tab_element' table");
+                return(1);
+            }
 
             /** Review the values **/
             param->buffer_operand[0] = '\0';
@@ -1014,8 +1047,9 @@ int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
 
                     /* The value has been changed */
                     modified = 1;
-                } else
+                } else {
                     strcat(param->buffer_operand, tab_element[j]);
+                }
             }
 
             /* Memory release */
@@ -1024,8 +1058,10 @@ int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
             /** If the value has been changed, we replace it **/
             if (modified == 1) {
                 new_value = strdup(param->buffer_operand);
-                if (new_value == NULL)
+                if (new_value == NULL) {
                     my_RaiseError(ERROR_RAISE, "Impossible to allocate memory to replace an Equivalence");
+                    return(1);
+                }
 
                 /* Free the old */
                 free(current_equivalence->valueStr);
@@ -1036,10 +1072,13 @@ int BuildEquivalenceTable(struct omf_segment* current_omfsegment) {
         }
 
         /* Don't endlessly recurse */
-        if (modified)
+        if (modified) {
             nb_modified++;
-        if (nb_modified > 10)
+        }
+        if (nb_modified > 10) {
             my_RaiseError(ERROR_RAISE, "Recursivity detected in Equivalence replacement");
+            return(1);
+        }
     }
 
     /* OK */
@@ -1054,6 +1093,7 @@ int BuildExternalTable(struct omf_segment* current_omfsegment) {
     struct external* current_external = NULL;
     struct source_file* first_file = NULL;
     struct source_line* current_line = NULL;
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
@@ -1066,21 +1106,26 @@ int BuildExternalTable(struct omf_segment* current_omfsegment) {
     /** Pass all lines in to review **/
     for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
         /* Invalid lines are ignored */
-        if (current_line->is_valid == 0)
+        if (current_line->is_valid == 0) {
             continue;
+        }
 
         /* We only take External */
-        if (current_line->type != LINE_EXTERNAL)
+        if (current_line->type != LINE_EXTERNAL) {
             continue;
+        }
 
         /** Allocation of the structure External **/
         current_external = (struct external*)calloc(1, sizeof(struct external));
-        if (current_external == NULL)
+        if (current_external == NULL) {
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure external");
+            return(1);
+        }
         current_external->name = strdup(current_line->label_txt);
         if (current_external->name == NULL) {
             mem_free_external(current_external);
             my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'name' from structure external");
+            return(1);
         }
         current_external->source_line = current_line;
 
@@ -1100,7 +1145,9 @@ int BuildExternalTable(struct omf_segment* current_omfsegment) {
 /*  CheckForDuplicatedLabel() :  Search Duplicate Labels. */
 /**********************************************************/
 int CheckForDuplicatedLabel(struct omf_segment* current_omfsegment) {
-    int nb_label = 0, nb_equivalence = 0, nb_error = 0;
+    int nb_label = 0;
+    int nb_equivalence = 0;
+    int nb_error = 0;
     struct label* previous_label = NULL;
     struct label* current_label = NULL;
     struct equivalence* previous_equivalence = NULL;
@@ -1111,13 +1158,19 @@ int CheckForDuplicatedLabel(struct omf_segment* current_omfsegment) {
     my_Memory(MEMORY_GET_LABEL_NB, &nb_label, NULL, current_omfsegment);
     for (int i = 1; i <= nb_label; i++) {
         my_Memory(MEMORY_GET_LABEL, &i, &current_label, current_omfsegment);
-        if (previous_label != NULL && current_label != NULL)
+        if (previous_label != NULL && current_label != NULL) {
             if (!strcmp(previous_label->name, current_label->name)) {
-                printf("      => [Error] Found label name '%s' in both source files '%s' (line %d) and '%s' (line %d).\n", current_label->name,
-                    previous_label->line->file->file_name, previous_label->line->file_line_number,
-                    current_label->line->file->file_name, current_label->line->file_line_number);
+                printf(
+                    "      => [Error] Found label name '%s' in both source files '%s' (line %d) and '%s' (line %d).\n",
+                    current_label->name,
+                    previous_label->line->file->file_name,
+                    previous_label->line->file_line_number,
+                    current_label->line->file->file_name,
+                    current_label->line->file_line_number
+                );
                 nb_error++;
             }
+        }
 
         previous_label = current_label;
     }
@@ -1127,13 +1180,19 @@ int CheckForDuplicatedLabel(struct omf_segment* current_omfsegment) {
     my_Memory(MEMORY_GET_EQUIVALENCE_NB, &nb_equivalence, NULL, current_omfsegment);
     for (int i = 1; i <= nb_equivalence; i++) {
         my_Memory(MEMORY_GET_EQUIVALENCE, &i, &current_equivalence, current_omfsegment);
-        if (previous_equivalence != NULL && current_equivalence != NULL)
+        if (previous_equivalence != NULL && current_equivalence != NULL) {
             if (!strcmp(previous_equivalence->name, current_equivalence->name)) {
-                printf("      => [Error] Found label equivalence '%s' in both source files '%s' (line %d) and '%s' (line %d).\n", current_equivalence->name,
-                    previous_equivalence->source_line->file->file_name, previous_equivalence->source_line->file_line_number,
-                    current_equivalence->source_line->file->file_name, current_equivalence->source_line->file_line_number);
+                printf(
+                    "      => [Error] Found label equivalence '%s' in both source files '%s' (line %d) and '%s' (line %d).\n",
+                    current_equivalence->name,
+                    previous_equivalence->source_line->file->file_name,
+                    previous_equivalence->source_line->file_line_number,
+                    current_equivalence->source_line->file->file_name,
+                    current_equivalence->source_line->file_line_number
+                );
                 nb_error++;
             }
+        }
 
         previous_equivalence = current_equivalence;
     }
@@ -1145,9 +1204,14 @@ int CheckForDuplicatedLabel(struct omf_segment* current_omfsegment) {
         /* Search for a Label with the same name */
         my_Memory(MEMORY_SEARCH_LABEL, current_equivalence->name, &current_label, current_omfsegment);
         if (current_label != NULL) {
-            printf("      => [Error] Found equivalence and label '%s' in both source files '%s' (line %d) and '%s' (line %d).\n", current_equivalence->name,
-                current_equivalence->source_line->file->file_name, current_equivalence->source_line->file_line_number,
-                current_label->line->file->file_name, current_label->line->file_line_number);
+            printf(
+                "      => [Error] Found equivalence and label '%s' in both source files '%s' (line %d) and '%s' (line %d).\n",
+                current_equivalence->name,
+                current_equivalence->source_line->file->file_name,
+                current_equivalence->source_line->file_line_number,
+                current_label->line->file->file_name,
+                current_label->line->file_line_number
+            );
             nb_error++;
         }
     }
@@ -1161,7 +1225,8 @@ int CheckForDuplicatedLabel(struct omf_segment* current_omfsegment) {
 /*  ProcessAllLocalLabel() :   replace local labels with unid_. */
 /****************************************************************/
 int ProcessAllLocalLabel(struct omf_segment* current_omfsegment) {
-    int error = 0, nb_macro = 0;
+    int error = 0;
+    int nb_macro = 0;
     struct source_file* first_file = NULL;
     struct source_line* current_line = NULL;
     struct source_line* last_line = NULL;
@@ -1171,9 +1236,11 @@ int ProcessAllLocalLabel(struct omf_segment* current_omfsegment) {
     my_Memory(MEMORY_GET_FILE, &first_file, NULL, current_omfsegment);
 
     /** Process the lines in the Source file **/
-    for (current_line = first_file->first_line; current_line; current_line = current_line->next)
-        if (current_line->next == NULL)
+    for (current_line = first_file->first_line; current_line; current_line = current_line->next) {
+        if (current_line->next == NULL) {
             last_line = current_line;
+        }
+    }
     error = ProcessSourceLineLocalLabel(first_file->first_line, last_line);
 
     /** Process the Macros **/
@@ -1199,35 +1266,44 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
     struct source_line* begin_global_line = NULL;
     struct source_line* end_global_line = NULL;
     struct source_line* replace_line = NULL;
-    int found = 0, nb_local = 0;
+    int found = 0;
+    int nb_local = 0;
     char* new_label = NULL;
     char* new_operand = NULL;
     char previous_label[256];
     char unique_label[256];
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
     /** If a Label: Local exists in only 1 copy, we will globalize it _Local **/
     for (current_line = first_line; current_line; current_line = current_line->next) {
         /* We ignore the lines comments / those without labels / Label other than :Label */
-        if (current_line->type == LINE_COMMENT || current_line->is_valid == 0)
+        if (current_line->type == LINE_COMMENT || current_line->is_valid == 0) {
             continue;
-        if (strlen(current_line->label_txt) == 0)
+        }
+        if (strlen(current_line->label_txt) == 0) {
             continue;
-        if (current_line->label_txt[0] != ':')
+        }
+        if (current_line->label_txt[0] != ':') {
             continue;
+        }
 
         /** Is this label unique? **/
         for (found = 0, other_line = first_line; other_line; other_line = other_line->next) {
             /* We ignore the lines comments / those without labels / Label other than :Label */
-            if (other_line->type == LINE_COMMENT || other_line->is_valid == 0)
+            if (other_line->type == LINE_COMMENT || other_line->is_valid == 0) {
                 continue;
-            if (strlen(other_line->label_txt) == 0)
+            }
+            if (strlen(other_line->label_txt) == 0) {
                 continue;
-            if (other_line->label_txt[0] != ':')
+            }
+            if (other_line->label_txt[0] != ':') {
                 continue;
-            if (other_line == current_line)
+            }
+            if (other_line == current_line) {
                 continue;
+            }
 
             /* Compare the Label */
             if (!strcmp(current_line->label_txt, other_line->label_txt)) {
@@ -1245,10 +1321,12 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
             /* Is this _Label unique? */
             for (found = 0, other_line = first_line; other_line; other_line = other_line->next) {
                 /* We ignore the lines comments / those without labels / Label other than :Label */
-                if (other_line->type == LINE_COMMENT || other_line->is_valid == 0)
+                if (other_line->type == LINE_COMMENT || other_line->is_valid == 0) {
                     continue;
-                if (strlen(other_line->label_txt) == 0)
+                }
+                if (strlen(other_line->label_txt) == 0) {
                     continue;
+                }
 
                 /* Compare the Label */
                 if (!strcmp(unique_label, other_line->label_txt)) {
@@ -1284,18 +1362,27 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
     /** We are looking for the first Global Label **/
     for (begin_global_line = first_line; begin_global_line; begin_global_line = begin_global_line->next) {
         /* Comment / non-label lines are ignored / those with variable labels ] */
-        if (begin_global_line->type == LINE_COMMENT || begin_global_line->is_valid == 0)
+        if (begin_global_line->type == LINE_COMMENT || begin_global_line->is_valid == 0) {
             continue;
-        if (strlen(begin_global_line->label_txt) == 0)
+        }
+        if (strlen(begin_global_line->label_txt) == 0) {
             continue;
-        if (begin_global_line->label_txt[0] == ']')
+        }
+        if (begin_global_line->label_txt[0] == ']') {
             continue;
-        if (begin_global_line->was_local_label == 1)
+        }
+        if (begin_global_line->was_local_label == 1) {
             continue;
+        }
 
         /* Error : You can not start your source with a Local Label */
         if (begin_global_line->label_txt[0] == ':') {
-            printf("      => [Error] Local Label : '%s' can not be first label in file '%s' (line %d).\n", begin_global_line->data, begin_global_line->file->file_name, begin_global_line->file_line_number);
+            printf(
+                "      => [Error] Local Label : '%s' can not be first label in file '%s' (line %d).\n",
+                begin_global_line->data,
+                begin_global_line->file->file_name,
+                begin_global_line->file_line_number
+            );
             return(1);
         }
 
@@ -1304,22 +1391,27 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
     }
 
     /* No global Label in the source => We take the beginning of the file as reference */
-    if (begin_global_line == NULL)
+    if (begin_global_line == NULL) {
         begin_global_line = first_line;
+    }
 
     /** Process local labels located between 2 global labels **/
     while (begin_global_line) {
         /* Search the following global label */
         for (nb_local = 0, end_global_line = begin_global_line->next; end_global_line; end_global_line = end_global_line->next) {
             /* We jump */
-            if (end_global_line->type == LINE_COMMENT || end_global_line->is_valid == 0)
+            if (end_global_line->type == LINE_COMMENT || end_global_line->is_valid == 0) {
                 continue;
-            if (strlen(end_global_line->label_txt) == 0)
+            }
+            if (strlen(end_global_line->label_txt) == 0) {
                 continue;
-            if (end_global_line->label_txt[0] == ']')
+            }
+            if (end_global_line->label_txt[0] == ']') {
                 continue;
-            if (end_global_line->was_local_label == 1)
+            }
+            if (end_global_line->was_local_label == 1) {
                 continue;
+            }
 
             /* Count matches */
             if (end_global_line->label_txt[0] == ':') {
@@ -1332,12 +1424,15 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
         }
 
         /** No Global Label => We take the last line of the Source **/
-        if (end_global_line == NULL)
+        if (end_global_line == NULL) {
             end_global_line = last_line;
+        }
 
         /** We're done **/
-        if (nb_local == 0 && end_global_line == last_line)
+        if (nb_local == 0 && end_global_line == last_line) {
+            // JASNOTE: Error? No?
             return(0);
+        }
 
         /** No local label in the meantime, we go to the next **/
         if (nb_local == 0 && end_global_line != NULL) {
@@ -1350,8 +1445,9 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
             /** We will review all the lines of the interval to correct all local labels **/
             for (current_line = begin_global_line; current_line; current_line = current_line->next) {
                 /* Skips invalid rows */
-                if (current_line->is_valid == 0)
+                if (current_line->is_valid == 0) {
                     continue;
+                }
 
                 /** We are looking for a local Label **/
                 if (current_line->label_txt[0] == ':') {
@@ -1370,22 +1466,26 @@ static int ProcessSourceLineLocalLabel(struct source_line* first_line, struct so
                         }
 
                         /* End of zone */
-                        if (replace_line == end_global_line)
+                        if (replace_line == end_global_line) {
                             break;
+                        }
                     }
 
                     /** Replaces the label of the line **/
                     new_label = strdup(unique_label);
-                    if (new_label == NULL)
+                    if (new_label == NULL) {
                         my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for new local label");
+                        return(1);
+                    }
                     free(current_line->label_txt);
                     current_line->label_txt = new_label;
                     current_line->was_local_label = 1;     /* This label is a local label */
                 }
 
                 /* Zone ends */
-                if (current_line == end_global_line)
+                if (current_line == end_global_line) {
                     break;
+                }
             }
         }
     }
@@ -1407,34 +1507,40 @@ static int ProcessMacroLineLocalLabel(struct macro_line* first_line, struct macr
     char* new_label = NULL;
     char* new_operand = NULL;
     char unique_label[256];
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
     /** We are looking for the first Global Label **/
     for (begin_global_line = first_line; begin_global_line; begin_global_line = begin_global_line->next) {
         /* Comment / non-label lines are ignored / those with variable labels ] */
-        if (strlen(begin_global_line->label) == 0)
+        if (strlen(begin_global_line->label) == 0) {
             continue;
-        if (begin_global_line->label[0] == ']')
+        }
+        if (begin_global_line->label[0] == ']') {
             continue;
+        }
 
         /* We are on the 1st Global Label */
         break;
     }
 
     /* No global label in the source => We take the 1st line as reference */
-    if (begin_global_line == NULL)
+    if (begin_global_line == NULL) {
         begin_global_line = first_line;
+    }
 
     /** Process local labels located between 2 global labels **/
     while (begin_global_line) {
         /* Search the following global label */
         for (nb_local = 0, end_global_line = begin_global_line->next; end_global_line; end_global_line = end_global_line->next) {
             /* We jump */
-            if (strlen(end_global_line->label) == 0)
+            if (strlen(end_global_line->label) == 0) {
                 continue;
-            if (end_global_line->label[0] == ']')
+            }
+            if (end_global_line->label[0] == ']') {
                 continue;
+            }
 
             /* Count matches */
             if (end_global_line->label[0] == ':') {
@@ -1447,12 +1553,15 @@ static int ProcessMacroLineLocalLabel(struct macro_line* first_line, struct macr
         }
 
         /* We reached the end without meeting a Global Label */
-        if (end_global_line == NULL)
+        if (end_global_line == NULL) {
             end_global_line = last_line;
+        }
 
         /** We're done **/
-        if (nb_local == 0 && end_global_line == last_line)
+        if (nb_local == 0 && end_global_line == last_line) {
+            // JASNOTE: Error?
             return(0);
+        }
 
         /** No local label in the meantime, we go to the next **/
         if (nb_local == 0 && end_global_line != NULL) {
@@ -1479,21 +1588,25 @@ static int ProcessMacroLineLocalLabel(struct macro_line* first_line, struct macr
                         }
 
                         /* End of zone */
-                        if (replace_line == end_global_line)
+                        if (replace_line == end_global_line) {
                             break;
+                        }
                     }
 
                     /** Replaces the label of the line **/
                     new_label = strdup(unique_label);
-                    if (new_label == NULL)
+                    if (new_label == NULL) {
                         my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for new local label in Macro");
+                        return(1);
+                    }
                     free(current_line->label);
                     current_line->label = new_label;
                 }
 
                 /* Zone ends */
-                if (current_line == end_global_line)
+                if (current_line == end_global_line) {
                     break;
+                }
             }
         }
     }
@@ -1507,7 +1620,8 @@ static int ProcessMacroLineLocalLabel(struct macro_line* first_line, struct macr
 /*  ProcessAllVariableLabel() :  Variable labels are replaced by unid_. */
 /************************************************************************/
 int ProcessAllVariableLabel(struct omf_segment* current_omfsegment) {
-    int error = 0, nb_macro = 0;
+    int error = 0;
+    int nb_macro = 0;
     struct source_file* first_file = NULL;
     struct macro* current_macro = NULL;
 
@@ -1549,22 +1663,30 @@ int ProcessSourceLineVariableLabel(struct source_line* first_line) {
     /*** Process all Variable Labels ]label ***/
     for (begin_variable_line = first_line; begin_variable_line; begin_variable_line = begin_variable_line->next) {
         /* We ignore comment lines / those without labels */
-        if (begin_variable_line->type == LINE_COMMENT || strlen(begin_variable_line->label_txt) == 0 || begin_variable_line->is_valid == 0)
+        if (begin_variable_line->type == LINE_COMMENT || strlen(begin_variable_line->label_txt) == 0 || begin_variable_line->is_valid == 0) {
             continue;
+        }
         if (begin_variable_line->type == LINE_VARIABLE) {
             /* It is necessary to differentiate a true Equivalence of a label ]LP = * */
-            if (strchr(begin_variable_line->operand_txt, '*') == NULL)
+            if (strchr(begin_variable_line->operand_txt, '*') == NULL) {
                 continue;
+            }
 
             /** Detected * used as a value? **/
             use_address = UseCurrentAddress(begin_variable_line->operand_txt, &buffer_error[0], begin_variable_line);
             if (strlen(buffer_error) > 0) {
-                printf("    Error : Impossible to analyze Operand '%s' in source file '%s' (line %d) : %s.\n",
-                    begin_variable_line->operand_txt, begin_variable_line->file->file_name, begin_variable_line->file_line_number, buffer_error);
+                printf(
+                    "    Error : Impossible to analyze Operand '%s' in source file '%s' (line %d) : %s.\n",
+                    begin_variable_line->operand_txt,
+                    begin_variable_line->file->file_name,
+                    begin_variable_line->file_line_number,
+                    buffer_error
+                );
                 return(1);
             }
-            if (use_address == 0)
+            if (use_address == 0) {
                 continue;
+            }
         }
 
         /** Start of the search area **/
@@ -1572,12 +1694,14 @@ int ProcessSourceLineVariableLabel(struct source_line* first_line) {
             /** Search to the end of the search range for = Other Variable Label with the same name **/
             for (end_variable_line = begin_variable_line->next; end_variable_line; end_variable_line = end_variable_line->next) {
                 /* We ignore comment lines / those without labels */
-                if (end_variable_line->type == LINE_COMMENT || strlen(end_variable_line->label_txt) == 0 || end_variable_line->is_valid == 0)
+                if (end_variable_line->type == LINE_COMMENT || strlen(end_variable_line->label_txt) == 0 || end_variable_line->is_valid == 0) {
                     continue;
+                }
 
                 /* We are looking for the same Label (Case sensitive) */
-                if (!strcmp(begin_variable_line->label_txt, end_variable_line->label_txt))
+                if (!strcmp(begin_variable_line->label_txt, end_variable_line->label_txt)) {
                     break;
+                }
             }
 
             /* Creation of a unique label */
@@ -1586,11 +1710,18 @@ int ProcessSourceLineVariableLabel(struct source_line* first_line) {
             /** We replace on the zone **/
             for (replace_line = begin_variable_line; replace_line != end_variable_line; replace_line = replace_line->next) {
                 /* We do not process invalid lines */
-                if (replace_line->is_valid == 0)
+                if (replace_line->is_valid == 0) {
                     continue;
+                }
 
                 /** Replaces the Label in the Operand **/
-                new_operand = ReplaceInOperand(replace_line->operand_txt, begin_variable_line->label_txt, unique_label, SEPARATOR_REPLACE_VARIABLE, replace_line);
+                new_operand = ReplaceInOperand(
+                    replace_line->operand_txt,
+                    begin_variable_line->label_txt,
+                    unique_label,
+                    SEPARATOR_REPLACE_VARIABLE,
+                    replace_line
+                );
                 if (new_operand != replace_line->operand_txt) {
                     free(replace_line->operand_txt);
                     replace_line->operand_txt = new_operand;
@@ -1599,8 +1730,10 @@ int ProcessSourceLineVariableLabel(struct source_line* first_line) {
 
             /** Replaces the label of the line **/
             new_label = strdup(unique_label);
-            if (new_label == NULL)
+            if (new_label == NULL) {
                 my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for new variable label");
+                return(1);
+            }
             free(begin_variable_line->label_txt);
             begin_variable_line->label_txt = new_label;
         }
@@ -1764,6 +1897,7 @@ int ProcessLineEquivalence(struct source_line* current_line, struct omf_segment*
     tab_element = DecodeOperandeAsElementTable(current_line->operand_txt, &nb_element, SEPARATOR_REPLACE_LABEL, current_line);
     if (tab_element == NULL) {
         my_RaiseError(ERROR_RAISE, "Impossible to decode Operand as element table");
+        return(1);
     }
 
     /** We rebuild the chain by replacing the values (case sensitive) **/
@@ -1906,12 +2040,15 @@ int BuildVariableTable(struct omf_segment* current_omfsegment) {
         /** Allocate a new variable structure **/
         if (current_variable == NULL) {
             current_variable = (struct variable*)calloc(1, sizeof(struct variable));
-            if (current_variable == NULL)
+            if (current_variable == NULL) {
                 my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for structure variable");
+                return(1);
+            }
             current_variable->name = strdup(current_line->label_txt);
             if (current_variable->name == NULL) {
                 free(current_variable);
                 my_RaiseError(ERROR_RAISE, "Impossible to allocate memory for 'name' from structure variable");
+                return(1);
             }
 
             current_variable->value = 0;
@@ -2445,6 +2582,7 @@ struct relocate_address* BuildRelocateAddress(BYTE ByteCnt, BYTE BitShiftCnt, WO
     current_address = (struct relocate_address*)calloc(1, sizeof(struct relocate_address));
     if (current_address == NULL) {
         my_RaiseError(ERROR_RAISE, "Error : Can't allocate memory for relocate_address structure.");
+        return(NULL);
     }
 
     /* Fill out structure */
@@ -2471,12 +2609,13 @@ struct relocate_address* BuildRelocateAddress(BYTE ByteCnt, BYTE BitShiftCnt, WO
             current_omfsegment->last_address = current_address;
         } else {
             /* Attach in the middle */
-            for (next_address = current_omfsegment->first_address; ; next_address = next_address->next)
+            for (next_address = current_omfsegment->first_address; ; next_address = next_address->next) {
                 if (next_address->next->OffsetPatch >= current_address->OffsetPatch) {
                     current_address->next = next_address->next;
                     next_address->next = current_address;
                     break;
                 }
+            }
         }
     }
 
