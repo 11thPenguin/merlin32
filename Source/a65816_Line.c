@@ -1253,7 +1253,9 @@ int ProcessAllLocalLabel(struct omf_segment* current_omfsegment) {
     }
 
     /* OK */
-    return(0);
+    // JASNOTE: How about we return error, rather than always 0?
+    //return(0);
+    return(error);
 }
 
 
@@ -1640,8 +1642,9 @@ int ProcessAllVariableLabel(struct omf_segment* current_omfsegment) {
         error = ProcessMacroLineVariableLabel(current_macro->first_line, current_macro);
     }
 
-    /* OK */
-    return(0);
+    // JASNOTE: How about we return error, rather than always 0?
+    //return(0);
+    return(error);
 }
 
 
