@@ -145,3 +145,5 @@ Breakpoints_v2.xcbkptlist
 /vcxproj/x64/Release/Main.nativecodeanalysis.sarif
 /vcxproj/x64/Release/Main.nativecodeanalysis.xml
 /vcxproj/x64/Release/vc.nativecodeanalysis.all.xml
+/vcxproj/x64/Debug/merlin32.exe.lastcodeanalysissucceeded
+/vcxproj/x64/Debug/NativeCodeAnalysis.read.1.tlog
