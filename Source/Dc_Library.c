@@ -333,18 +333,20 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
 
             /* Place the items */
             current_opcode = current_omfsegment->first_opcode;
-            for (int i = 0; current_opcode; current_opcode = current_opcode->next, i++)
+            for (int i = 0; current_opcode; current_opcode = current_opcode->next, i++) {
                 current_omfsegment->tab_opcode[i] = current_opcode;
+            }
 
             /* Sort items */
             qsort(current_omfsegment->tab_opcode, current_omfsegment->nb_opcode, sizeof(struct item*), compare_item);
 
             /* Replace the links */
             for (int i = 0; i < current_omfsegment->nb_opcode; i++) {
-                if (i == current_omfsegment->nb_opcode - 1)
+                if (i == current_omfsegment->nb_opcode - 1) {
                     current_omfsegment->tab_opcode[i]->next = NULL;
-                else
+                } else {
                     current_omfsegment->tab_opcode[i]->next = current_omfsegment->tab_opcode[i + 1];
+                }
             }
             current_omfsegment->first_opcode = current_omfsegment->tab_opcode[0];
             current_omfsegment->last_opcode = current_omfsegment->tab_opcode[current_omfsegment->nb_opcode - 1];
@@ -380,8 +382,9 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
             current_omfsegment->nb_opcode = 0;
             current_omfsegment->first_opcode = NULL;
             current_omfsegment->last_opcode = NULL;
-            if (current_omfsegment->tab_opcode)
+            if (current_omfsegment->tab_opcode) {
                 free(current_omfsegment->tab_opcode);
+            }
             current_omfsegment->tab_opcode = NULL;
             break;
 
@@ -1336,8 +1339,9 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
             break;
 
         case MEMORY_SORT_EXTERNAL:
-            if (current_omfsegment->nb_external == 0)
+            if (current_omfsegment->nb_external == 0) {
                 return;
+            }
 
             /* Allocate memory */
             if (current_omfsegment->tab_external) {
@@ -1420,9 +1424,11 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
             /*****************************************************************************/
         case MEMORY_ADD_GLOBAL:
             /* We do not want the same label twice */
-            for (current_global = current_omfsegment->first_global; current_global; current_global = current_global->next)
-                if (!strcmp(current_global->name, (char*)data))
+            for (current_global = current_omfsegment->first_global; current_global; current_global = current_global->next) {
+                if (!strcmp(current_global->name, (char*)data)) {
                     return;
+                }
+            }
 
             /* Allocate memory */
             new_global = (struct global*)calloc(1, sizeof(struct global));
@@ -1439,10 +1445,11 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
             }
 
             /* Attaches the structure */
-            if (current_omfsegment->first_global == NULL)
+            if (current_omfsegment->first_global == NULL) {
                 current_omfsegment->first_global = new_global;
-            else
+            } else {
                 current_omfsegment->last_global->next = new_global;
+            }
             current_omfsegment->last_global = new_global;
             current_omfsegment->nb_global++;
             break;
@@ -1456,13 +1463,15 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
             *((char**)value) = NULL;
 
             /* Verify expected value */
-            if (*((int*)data) <= 0 || *((int*)data) > current_omfsegment->nb_global)
+            if (*((int*)data) <= 0 || *((int*)data) > current_omfsegment->nb_global) {
                 return;
+            }
 
             /* Locate the structure */
             current_global = current_omfsegment->first_global;
-            for (int i = 0; i < (*((int*)data)) - 1; i++)
+            for (int i = 0; i < (*((int*)data)) - 1; i++) {
                 current_global = current_global->next;
+            }
             *((struct global**)value) = current_global;
             break;
 
@@ -1487,24 +1496,26 @@ void my_Memory(int code, void* data, void* value, struct omf_segment* current_om
 /*  my_stricmp() : Case insensitive string compare. */
 /****************************************************/
 int my_intcmp(int int1, int int2) {
-    if (int1 == int2)
+    if (int1 == int2) {
         return 0;
-    else if (int1 < int2)
+    } else if (int1 < int2) {
         return -1;
-    else
+    } else {
         return 1;
+    }
 }
 
 /******************************************************/
 /*  my_stri64cmp() : Case insensitive string compare. */
 /******************************************************/
 int my_int64cmp(int64_t int1, int64_t int2) {
-    if (int1 == int2)
+    if (int1 == int2) {
         return 0;
-    else if (int1 < int2)
+    } else if (int1 < int2) {
         return -1;
-    else
+    } else {
         return 1;
+    }
 }
 
 /****************************************************/
@@ -1560,13 +1571,14 @@ int64_t my_atoi64(char* expression) {
 void bo_memcpy(void* dst, void* src, size_t nb_byte) {
     unsigned char data_src[10];
     unsigned char data_dst[10];
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
     /** Classic memcpy for Intel processor (Little Endian) **/
-    if (param->byte_order == BYTE_ORDER_INTEL || nb_byte == 1)
+    if (param->byte_order == BYTE_ORDER_INTEL || nb_byte == 1) {
         memcpy(dst, src, nb_byte);
-    else {
+    } else {
         /* Change byte order for Big Endian processor */
         memcpy(&data_src[0], src, nb_byte);
 
@@ -1593,7 +1605,9 @@ void bo_memcpy(void* dst, void* src, size_t nb_byte) {
 /*  GetFileProperCasePath() :  Case insensitive Search for a file. */
 /*******************************************************************/
 char* GetFileProperCasePath(char* file_path_arg) {
-    int i, is_error, nb_found;
+    int i;
+    int is_error;
+    int nb_found;
     char folder_current[1024];
     char folder_path[1024];
     char file_path[1024];
@@ -1610,12 +1624,15 @@ char* GetFileProperCasePath(char* file_path_arg) {
     if (file_path_arg[1] != ':') {
         /* Current directory */
         GetCurrentDirectory(1024, TO_WIDESTR(folder_current));
-        if (strlen(folder_current) > 0)
-            if (folder_current[strlen(folder_current) - 1] != '\\')
+        if (strlen(folder_current) > 0) {
+            if (folder_current[strlen(folder_current) - 1] != '\\') {
                 strcat(folder_current, "\\");
+            }
+        }
         sprintf(file_path, "%s%s", folder_current, file_path_arg);
-    } else
+    } else {
         strcpy(file_path, file_path_arg);
+    }
 #else
     if (file_path_arg[0] != '/') {
         /* Current directory */
@@ -1640,8 +1657,9 @@ char* GetFileProperCasePath(char* file_path_arg) {
 
     /** List of Directory Lines **/
     tab_file_name = GetFolderFileList(folder_path, &nb_file_name, &is_error);
-    if (tab_file_name == NULL)
+    if (tab_file_name == NULL) {
         return(NULL);
+    }
 
     /** Search the Filename **/
     for (i = 0, nb_found = 0; i < nb_file_name; i++) {
@@ -1655,12 +1673,14 @@ char* GetFileProperCasePath(char* file_path_arg) {
     mem_free_list(nb_file_name, tab_file_name);
 
     /* Nothing found */
-    if (nb_found == 0)
+    if (nb_found == 0) {
         return(NULL);
+    }
 
     /* More than one File => ambiguous */
-    if (nb_found > 1)
+    if (nb_found > 1) {
         return(NULL);
+    }
 
     /* Only one => OK */
     return(&file_path_case[0]);
@@ -1687,6 +1707,7 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
     struct item* next_item;
     int nb_file;
     char** tab_file_name;
+
     struct parameter* param;
     my_Memory(MEMORY_GET_PARAM, &param, NULL, NULL);
 
@@ -1717,19 +1738,22 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
             hFile = _findfirst(param->buffer_file_path, &c_file);
             rc = (int)hFile;
             my_File(FILE_DECLARE_DIRECTORY, &hFile);
-        } else
+        } else {
             rc = _findnext(hFile, &c_file);
+        }
 
         /* We analyze the result */
-        if (rc == -1)
+        if (rc == -1) {
             break;    /* no more files */
+        }
 
         /** This entry is treated **/
         first_time++;
 
         /* Some entry is unknown */
-        if ((c_file.attrib & _A_SUBDIR) == _A_SUBDIR)
+        if ((c_file.attrib & _A_SUBDIR) == _A_SUBDIR) {
             continue;
+        }
 
         /** Keep the File **/
         /* Allocate memory */
@@ -1740,8 +1764,9 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
             /* Memory release */
             for (current_item = first_item; current_item; current_item = next_item) {
                 next_item = current_item->next;
-                if (current_item->name)
+                if (current_item->name) {
                     free(current_item->name);
+                }
                 free(current_item);
             }
             *is_error = 1;
@@ -1754,8 +1779,9 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
             /* Memory release */
             for (current_item = first_item; current_item; current_item = next_item) {
                 next_item = current_item->next;
-                if (current_item->name)
+                if (current_item->name) {
                     free(current_item->name);
+                }
                 free(current_item);
             }
             *is_error = 1;
@@ -1763,10 +1789,11 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
         }
         /* Addition to the list */
         nb_item++;
-        if (first_item == NULL)
+        if (first_item == NULL) {
             first_item = current_item;
-        else
+        } else {
             last_item->next = current_item;
+        }
         last_item = current_item;
     }
 
@@ -1848,8 +1875,9 @@ char** GetFolderFileList(char* folder_path, int* nb_file_rtn, int* is_error) {
         /* Memory release */
         for (current_item = first_item; current_item; current_item = next_item) {
             next_item = current_item->next;
-            if (current_item->name)
+            if (current_item->name) {
                 free(current_item->name);
+            }
             free(current_item);
         }
         *is_error = 1;
@@ -2008,7 +2036,8 @@ unsigned char* LoadTextFileData(char* file_path, size_t* data_length_rtn) {
 /**************************************************************/
 unsigned char* LoadBinaryFileData(char* file_path, size_t* data_length_rtn) {
     FILE* fd;
-    size_t nb_read, file_size;
+    size_t nb_read;
+    size_t file_size;
     unsigned char* data;
     char* file_case_path = NULL;
 
@@ -2180,7 +2209,9 @@ void GetFolderFromPath(char* file_path, char* folder_path_rtn) {
 /*  ExtractAllIem() :  Separate the different elements of a line. */
 /******************************************************************/
 struct item* ExtractAllIem(char* data) {
-    int end = 0, length = 0, offset = 0;
+    int end = 0;
+    int length = 0;
+    int offset = 0;
     struct item* current_item = NULL;
     struct item* first_item = NULL;
     struct item* last_item = NULL;
@@ -2189,8 +2220,9 @@ struct item* ExtractAllIem(char* data) {
 
     /* Particular case : Empty line */
     length = (int)strlen(data);
-    if (length == 0)
+    if (length == 0) {
         return(NULL);
+    }
 
     /* Particular case : Line comment */
     if (data[0] == '*' || data[0] == ';') {
@@ -2208,15 +2240,17 @@ struct item* ExtractAllIem(char* data) {
                 value[offset++] = data[i];
                 value_type = TYPE_SEPARATOR;
             } else if (value_type == TYPE_SEPARATOR)   /* Continue with separators */
+            {
                 value[offset++] = data[i];
-            else {
+            } else {
                 /* End of the previous value DATA */
                 value[offset] = '\0';
                 current_item = mem_alloc_item(value, value_type);
-                if (first_item == NULL)
+                if (first_item == NULL) {
                     first_item = current_item;
-                else
+                } else {
                     last_item->next = current_item;
+                }
                 last_item = current_item;
 
                 /* Start of a new SEPARATOR value */
@@ -2230,10 +2264,11 @@ struct item* ExtractAllIem(char* data) {
                 /* Particular case : a DATA value starting with one; is a comment that goes to the end of the line */
                 if (data[i] == ';') {
                     current_item = mem_alloc_item(&data[i], TYPE_DATA);
-                    if (first_item == NULL)
+                    if (first_item == NULL) {
                         first_item = current_item;
-                    else
+                    } else {
                         last_item->next = current_item;
+                    }
                     last_item = current_item;
                     return(first_item);
                 }
@@ -2242,11 +2277,12 @@ struct item* ExtractAllIem(char* data) {
                 if (data[i] == '"' || data[i] == '\'') {
                     end = 0;
                     /* Is there an end of chain? */
-                    for (int j = i + 1; j < length; j++)
+                    for (int j = i + 1; j < length; j++) {
                         if (data[j] == data[i]) {
                             end = j;
                             break;
                         }
+                    }
 
                     /* We take all these data together */
                     if (end) {
@@ -2266,11 +2302,12 @@ struct item* ExtractAllIem(char* data) {
                 if (data[i] == '"' || data[i] == '\'') {
                     end = 0;
                     /* Is there an end of chain? */
-                    for (int j = i + 1; j < length; j++)
+                    for (int j = i + 1; j < length; j++) {
                         if (data[j] == data[i]) {
                             end = j;
                             break;
                         }
+                    }
 
                     /* We take all these data together */
                     if (end) {
@@ -2287,10 +2324,11 @@ struct item* ExtractAllIem(char* data) {
                 /* End of previous value SEPARATOR */
                 value[offset] = '\0';
                 current_item = mem_alloc_item(value, value_type);
-                if (first_item == NULL)
+                if (first_item == NULL) {
                     first_item = current_item;
-                else
+                } else {
                     last_item->next = current_item;
+                }
                 last_item = current_item;
 
                 /* new DATA */
@@ -2301,10 +2339,11 @@ struct item* ExtractAllIem(char* data) {
                 /* Particular case : a DATA value starting with one; is a comment that goes to the end of the line */
                 if (data[i] == ';') {
                     current_item = mem_alloc_item(&data[i], TYPE_DATA);
-                    if (first_item == NULL)
+                    if (first_item == NULL) {
                         first_item = current_item;
-                    else
+                    } else {
                         last_item->next = current_item;
+                    }
                     last_item = current_item;
                     return(first_item);
                 }
@@ -2338,10 +2377,11 @@ struct item* ExtractAllIem(char* data) {
     if (offset > 0) {
         value[offset] = '\0';
         current_item = mem_alloc_item(value, value_type);
-        if (first_item == NULL)
+        if (first_item == NULL) {
             first_item = current_item;
-        else
+        } else {
             last_item->next = current_item;
+        }
         last_item = current_item;
     }
 
@@ -2354,35 +2394,41 @@ struct item* ExtractAllIem(char* data) {
 /*  IsDecimal() :  Is it a decimal value? */
 /******************************************/
 int IsDecimal(char* value, int* nb_byte_rtn) {
-    int decimal = 0, is_negative = 0;
+    int decimal = 0;
+    int is_negative = 0;
 
     /* Init */
     *nb_byte_rtn = 0;
     is_negative = 0;
 
     /* Empty value */
-    if (strlen(value) == 0)
+    if (strlen(value) == 0) {
         return(0);
+    }
 
     /* We can have a -3 */
-    if (value[0] == '-')
+    if (value[0] == '-') {
         is_negative = 1;
+    }
 
     /* Test the range of character 0-9 */
-    for (int i = is_negative; i < (int)strlen(value); i++)
-        if (value[i] < '0' || value[i] > '9')
+    for (int i = is_negative; i < (int)strlen(value); i++) {
+        if (value[i] < '0' || value[i] > '9') {
             return(0);
+        }
+    }
 
     /* Determine the number of bytes */
     decimal = atoi(value);
-    if (decimal <= 0xFF)
+    if (decimal <= 0xFF) {
         *nb_byte_rtn = 1;
-    else if (decimal <= 0xFFFF)
+    } else if (decimal <= 0xFFFF) {
         *nb_byte_rtn = 2;
-    else if (decimal <= 0xFFFFFF)
+    } else if (decimal <= 0xFFFFFF) {
         *nb_byte_rtn = 3;
-    else
+    } else {
         return(0);     /* Value too big */
+    }
 
     /* OK */
     return(1);
@@ -2393,7 +2439,8 @@ int IsDecimal(char* value, int* nb_byte_rtn) {
 /*  IsHexaDecimal() :  Is it a hexadecimal value? */
 /**************************************************/
 int IsHexaDecimal(char* value, int* nb_byte_rtn) {
-    int is_negative = 0, length = 0;
+    int is_negative = 0;
+    int length = 0;
     char hexa_value[16];
 
     /* Init */
@@ -2401,39 +2448,48 @@ int IsHexaDecimal(char* value, int* nb_byte_rtn) {
     is_negative = 0;
 
     /* The first character must be a $ */
-    if (value[0] != '$')
+    if (value[0] != '$') {
         return(0);
+    }
 
     /* Empty value */
-    if (strlen(value) == 1)
+    if (strlen(value) == 1) {
         return(0);
+    }
 
     /* We can have a $-3, but here 3 is in decimal! */
-    if (value[1] == '-')
+    if (value[1] == '-') {
         is_negative = 1;
+    }
 
     /* Test the range of character 0-F */
-    for (int i = 1 + is_negative; i < (int)strlen(value); i++)
-        if (toupper(value[i]) < '0' || toupper(value[i]) > 'F')
+    for (int i = 1 + is_negative; i < (int)strlen(value); i++) {
+        if (toupper(value[i]) < '0' || toupper(value[i]) > 'F') {
             return(0);
+        }
+    }
 
     /* Determine the number of bytes (4 bytes max for the LONG) */
     if (is_negative == 1) {
         /* Convert to HEX */
         sprintf(hexa_value, "%X", atoi(&value[2]));
         length = (int)strlen(hexa_value);
-        if ((length % 2) == 1)
+        if ((length % 2) == 1) {
             length++;
-        if ((length / 2) > 4)
+        }
+        if ((length / 2) > 4) {
             return(0);                      /* Value too big */
+        }
         *nb_byte_rtn = length / 2;
     } else {
         /* Value coded in HEX */
         length = (int)strlen(&value[1]);
-        if ((length % 2) == 1)
+        if ((length % 2) == 1) {
             length++;
-        if ((length / 2) > 4)
+        }
+        if ((length / 2) > 4) {
             return(0);                      /* Value too big */
+        }
         *nb_byte_rtn = length / 2;
     }
 
@@ -2452,32 +2508,36 @@ int IsBinary(char* value, int* nb_byte_rtn) {
     *nb_byte_rtn = 0;
 
     /* The first character is a % */
-    if (value[0] != '%')
+    if (value[0] != '%') {
         return(0);
+    }
 
     /* Check the value range */
     for (int i = 1; i < (int)strlen(value); i++) {
-        if (value[i] == '0' || value[i] == '1')
+        if (value[i] == '0' || value[i] == '1') {
             nb_bit++;
-        else if (value[i] == '_')
+        } else if (value[i] == '_') {
             ;                /* Seperator */
-        else
+        } else {
             return(0);       /* Prohibited value */
+        }
     }
 
     /* Empty value */
-    if (nb_bit == 0)
+    if (nb_bit == 0) {
         return(0);
+    }
 
     /* Determine the number of bytes */
-    if (nb_bit <= 8)
+    if (nb_bit <= 8) {
         *nb_byte_rtn = 1;
-    else if (nb_bit <= 16)
+    } else if (nb_bit <= 16) {
         *nb_byte_rtn = 2;
-    else if (nb_bit <= 24)
+    } else if (nb_bit <= 24) {
         *nb_byte_rtn = 3;
-    else
+    } else {
         return(0);       /* Value too large */
+    }
 
     /* OK */
     return(1);
@@ -2494,30 +2554,36 @@ int IsAscii(char* value, int* nb_byte_rtn) {
     *nb_byte_rtn = 0;
 
     /* Empty */
-    if (strlen(value) < 2)
+    if (strlen(value) < 2) {
         return(0);
+    }
 
     /* The first character is a " or a ' */
-    if (value[0] != '"' && value[0] != '\'')
+    if (value[0] != '"' && value[0] != '\'') {
         return(0);
-    if (value[0] != value[strlen(value) - 1])
+    }
+    if (value[0] != value[strlen(value) - 1]) {
         return(0);
+    }
 
     /* Count the number of characters between "" */
-    for (int i = 1; i < (int)strlen(value) - 1; i++)
+    for (int i = 1; i < (int)strlen(value) - 1; i++) {
         nb_char++;
+    }
 
     /* Empty value */
-    if (nb_char == 0)
+    if (nb_char == 0) {
         return(0);
+    }
 
     /* Determine the number of bytes */
-    if (nb_char == 1)
+    if (nb_char == 1) {
         *nb_byte_rtn = 1;
-    else if (nb_char == 2)
+    } else if (nb_char == 2) {
         *nb_byte_rtn = 2;
-    else
+    } else {
         return(0);       /* Value too large */
+    }
 
     /* OK */
     return(1);
@@ -3063,7 +3129,9 @@ int IsSeparator(char c, int separator_mode) {
     else if (separator_mode == SEPARATOR_DATA_VALUES) {
         /* List of separators */
         if (c == ',')
+        {
             return(1);
+        }
     }
 
     /* Not a separator */
@@ -3130,7 +3198,8 @@ BYTE GetByteValue(char* value_txt) {
 /*******************************************************************/
 WORD GetWordValue(char* value_txt) {
     WORD value_wd = 0;
-    int i, j;
+    int i;
+    int j;
     unsigned int value_int = 0;
     int offset = 0;
     int is_hexa = 0;
@@ -3140,7 +3209,9 @@ WORD GetWordValue(char* value_txt) {
 
     /* Do you have a # first? */
     if (value_txt[offset] == '#')
+    {
         offset++;
+    }
 
     /* Is a $ following? */
     if (value_txt[offset] == '$') {
@@ -3158,7 +3229,9 @@ WORD GetWordValue(char* value_txt) {
                 value_int += (1 << j);
                 j++;
             } else if (value_txt[offset + strlen(&value_txt[offset]) - 1 - i] == '0')
+            {
                 j++;
+            }
         }
     } else if (is_hexa) {
         num_sscanf_values = sscanf(&value_txt[offset], "%X", &value_int);
@@ -3181,7 +3254,8 @@ WORD GetWordValue(char* value_txt) {
 /*********************************************************************/
 DWORD GetDwordValue(char* value_txt) {
     DWORD value_dwd = 0;
-    int i, j;
+    int i;
+    int j;
     unsigned int value_int = 0;
     int offset = 0;
     int is_hexa = 0;
@@ -3191,7 +3265,9 @@ DWORD GetDwordValue(char* value_txt) {
 
     /* Do you have a # first? */
     if (value_txt[offset] == '#')
+    {
         offset++;
+    }
 
     /* Is a $ following? */
     if (value_txt[offset] == '$') {
@@ -3209,7 +3285,9 @@ DWORD GetDwordValue(char* value_txt) {
                 value_int += (1 << j);
                 j++;
             } else if (value_txt[offset + strlen(&value_txt[offset]) - 1 - i] == '0')
+            {
                 j++;
+            }
         }
     } else if (is_hexa) {
         num_sscanf_values = sscanf(&value_txt[offset], "%X", &value_int);
@@ -3219,8 +3297,6 @@ DWORD GetDwordValue(char* value_txt) {
 
     /* Conversion to DWORD */
     if (0 != num_sscanf_values)
-
-
     {
         value_dwd = (DWORD)value_int;
     }
@@ -3256,7 +3332,8 @@ int64_t GetVariableValue(char* variable_name, int* is_error_rtn, struct omf_segm
 /********************************************************************/
 int64_t GetBinaryValue(char* expression) {
     int bitIdx = 0;
-    int64_t v = 1, value = 0;
+    int64_t v = 1;
+    int64_t value = 0;
 
     /** We only want 0,1 and _ **/
     for (int i = (int)strlen(expression) - 1; i >= 0; i--) {
@@ -3266,9 +3343,13 @@ int64_t GetBinaryValue(char* expression) {
             value += (v << bitIdx);
             bitIdx++;
         } else if (expression[i] == '_')
+        {
             continue;
+        }
         else
+        {
             return(-1);    /* Invalid character for binary */
+        }
     }
     /* Returns the value */
     return(value);
@@ -3287,7 +3368,9 @@ int64_t GetDecimalValue(char* expression, int* is_error_rtn) {
 
     /* Is there a - sign in front? */
     if (expression[0] == '-')
+    {
         is_negative = 1;
+    }
 
     /** We only want 0-9 **/
     for (int i = is_negative; i < (int)strlen(expression); i++) {
@@ -3314,12 +3397,16 @@ int64_t GetHexaValue(char* expression) {
 
     /* is this negative? Attention, in $ -3, 3 is in decimal! */
     if (expression[0] == '-')
+    {
         is_negative = 1;
+    }
 
     /** We only want 0-9 A-F **/
     for (int i = is_negative; i < (int)strlen(expression); i++) {
         if (!((expression[i] >= '0' && expression[i] <= '9') || (toupper(expression[i]) >= 'A' && toupper(expression[i]) <= 'F')))
+        {
             return(-1);    /* Invalid character for hexadecimal */
+        }
     }
     /** Decode the HEX expression **/
     if (is_negative == 1) {
@@ -3331,9 +3418,13 @@ int64_t GetHexaValue(char* expression) {
 
             /* Decode the character 0-F */
             if (expression[i] >= '0' && expression[i] <= '9')
+            {
                 v = (expression[i] - '0');
+            }
             else
+            {
                 v = ((toupper(expression[i]) - 'A') + 10);
+            }
 
             /* Add to value */
             value += (v << bitShift);
@@ -3342,9 +3433,13 @@ int64_t GetHexaValue(char* expression) {
 
     /* Returns the value */
     if (is_negative == 1)
+    {
         return(value * (-1));
+    }
     else
+    {
         return(value);
+    }
 }
 
 
@@ -3357,34 +3452,54 @@ int64_t GetAsciiValue(char* expression) {
 
     /** We want "c" or "cc" **/
     if (strlen(expression) != 3 && strlen(expression) != 4)
+    {
         return(-1);
+    }
     if (expression[0] != expression[strlen(expression) - 1])
+    {
         return(-1);
+    }
     if (expression[0] != '"' && expression[0] != '\'')
+    {
         return(-1);
+    }
 
     /* We check that the characters are in the range ASCII */
     if (strlen(expression) == 3)
+    {
         next_char = strchr(ASCII_TABLE, expression[1]);
+    }
     else {
         next_char = strchr(ASCII_TABLE, expression[1]);
         if (next_char != NULL)
+        {
             next_char = strchr(ASCII_TABLE, expression[2]);
+        }
     }
     if (next_char == NULL)
+    {
         return(-1);
+    }
 
     /** Decode the expression **/
     if (strlen(expression) == 3) {
         if (expression[0] == '"')
+        {
             value = (unsigned char)(expression[1] | 0x80);
+        }
         if (expression[0] == '\'')
+        {
             value = (unsigned char)(expression[1] & 0x7F);
+        }
     } else {
         if (expression[0] == '"')
+        {
             value = (((WORD)(expression[2] | 0x80)) << 8) | (WORD)(expression[1] | 0x80);
+        }
         if (expression[0] == '\'')
+        {
             value = (((WORD)(expression[2] & 0x7F)) << 8) | (WORD)(expression[1] & 0x7F);
+        }
     }
 
     /* Returns the value */
@@ -3413,7 +3528,9 @@ int64_t GetAddressValue(
 
     /* Particular case of * */
     if (!strcmp(expression, "*"))
+    {
         return(current_address);
+    }
 
     /* Is it an External Label */
     my_Memory(MEMORY_SEARCH_EXTERNAL, expression, &current_external, current_omfsegment);
@@ -3426,19 +3543,27 @@ int64_t GetAddressValue(
     /* We are looking for a Label */
     my_Memory(MEMORY_SEARCH_LABEL, expression, &current_label, current_omfsegment);
     if (current_label == NULL)
+    {
         return(-1);
+    }
 
     /* This label is in a DUM section */
     if (current_label->line->is_dum == 1)
+    {
         *is_dum_label_rtn = 1;
+    }
 
     /* This label is in a section [ORG $Addr ORG] */
     if (current_label->line->is_fix_address == 1)
+    {
         *is_fix_label_rtn = 1;
+    }
 
     /* The label is valid but the address is currently unknown */
     if (current_label->line->address == -1)
+    {
         return(-2);
+    }
 
     /* Calculate the address */
     address = (current_label->line->bank << 16) | (0xFFFF & current_label->line->address);
@@ -3524,7 +3649,9 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
         }
         expression[expIdx] = '\0';
     } else
+    {
         strcpy(expression, cond_line->operand_txt);
+    }
 
     /** We will treat the # < > ^ | **/
     has_hash = (expression[0] == '#') ? 1 : 0;
@@ -3732,7 +3859,9 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
         if (is_operator == 0) {
             /** We must come across a value **/
             if (!strcmp(tab_element[i], "{"))
+            {
                 value = EvaluateAlgebricExpression(tab_element, i, nb_element, cond_line->address, &nb_item);
+            }
             else {
                 /** The digital conversion has already been done **/
                 value = my_atoi64(tab_element[i]);
@@ -3740,23 +3869,39 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
 
             /** Add this value to the global expression **/
             if (i == 0)
+            {
                 value_expression = value * ((first_value_is_negative == 1) ? -1 : 1);
+            }
             else {
                 /** Applies the operator to both values **/
                 if (operator_c == '>')
+                {
                     value_expression = (value_expression > value) ? 1 : 0;
+                }
                 else if (operator_c == '=')
+                {
                     value_expression = (value_expression == value) ? 1 : 0;
+                }
                 else if (operator_c == '<')
+                {
                     value_expression = (value_expression < value) ? 1 : 0;
+                }
                 else if (operator_c == '#')
+                {
                     value_expression = (value_expression != value) ? 1 : 0;
+                }
                 else if (operator_c == '+')
+                {
                     value_expression = value_expression + value;
+                }
                 else if (operator_c == '-')
+                {
                     value_expression = value_expression - value;
+                }
                 else if (operator_c == '*')
+                {
                     value_expression = value_expression * value;
+                }
                 else if (operator_c == '/') {
                     /* Beware of divisions by Zero */
                     if (value == 0) {
@@ -3767,11 +3912,17 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
 
                     value_expression = value_expression / value;
                 } else if (operator_c == '!')
+                {
                     value_expression = value_expression ^ value;
+                }
                 else if (operator_c == '.')
+                {
                     value_expression = value_expression | value;
+                }
                 else if (operator_c == '&')
+                {
                     value_expression = value_expression & value;
+                }
             }
 
             /* Next will be an operator */
@@ -3779,7 +3930,9 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
 
             /* If we had one { we skip all the expression */
             if (!strcmp(tab_element[i], "{"))
+            {
                 i += nb_item;
+            }
         } else {
             /** We must recognize the operator **/
             if (
@@ -3814,9 +3967,13 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
     /* Do we know the expression */
     *value_expression_rtn = value_expression;
     if (value_expression == 0)
+    {
         return(STATUS_DONT);
+    }
     else
+    {
         return(STATUS_DO);
+    }
 }
 
 
@@ -3824,7 +3981,8 @@ int QuickConditionEvaluate(struct source_line* cond_line, int64_t* value_express
 /*  GetQuickValue() :  Recover the value of a named element. */
 /*************************************************************/
 int64_t GetQuickValue(char* name, struct source_line* cond_line, int* is_error_rtn, struct omf_segment* current_omfsegment) {
-    int result = 0, nb_valid_line = 0;
+    int result = 0;
+    int nb_valid_line = 0;
     int64_t value_expression = 0;
     struct source_line** tab_line;
 
@@ -3885,8 +4043,9 @@ int64_t GetQuickValue(char* name, struct source_line* cond_line, int* is_error_r
                 /* Return the value */
                 *is_error_rtn = 0;
                 return(value_expression);
-            } else   /* Simple label */
+            } else   
             {
+                /* Simple label */
                 /* We return the approximate address of the Label line */
                 free(tab_line);
                 *is_error_rtn = 0;
@@ -3916,16 +4075,24 @@ int64_t GetQuickVariable(char* variable_name, struct source_line* cond_line, int
     is_variable = 1;
     for (current_line = current_omfsegment->first_file->first_line; current_line; current_line = current_line->next) {
         if (current_line == cond_line)
+        {
             break;
+        }
         if (current_line->is_valid == 0)
+        {
             continue;
+        }
 
         /* ]Label or ]Variable */
         if (!strcmp(current_line->label_txt, variable_name)) {
             if (!my_stricmp(current_line->opcode_txt, "="))
+            {
                 is_variable = 1;
+            }
             else
+            {
                 is_variable = 0;
+            }
             break;
         }
     }
@@ -3940,9 +4107,13 @@ int64_t GetQuickVariable(char* variable_name, struct source_line* cond_line, int
     /** We go from bottom to top to find the value of the ]Variable **/
     for (current_line = current_omfsegment->first_file->first_line; current_line; current_line = current_line->next) {
         if (current_line == cond_line)
+        {
             break;
+        }
         if (current_line->is_valid == 0)
+        {
             continue;
+        }
 
         /* Look for the first definition of the Variable */
         if (!strcmp(variable_name, current_line->label_txt) && !my_stricmp(current_line->opcode_txt, "=")) {
@@ -5464,7 +5635,9 @@ struct item* mem_alloc_item(char* name, int type) {
 void mem_free_item(struct item* current_item) {
     if (current_item) {
         if (current_item->name)
+        {
             free(current_item->name);
+        }
 
         free(current_item);
     }
@@ -5498,7 +5671,9 @@ struct parameter* mem_alloc_param(void) {
     /* Allocate memory */
     param = (struct parameter*)calloc(1, sizeof(struct parameter));
     if (param == NULL)
+    {
         return(NULL);
+    }
 
     /* Buffers (64 KB) */
     param->buffer_line = (char*)calloc(1, 65536);
